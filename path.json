@@ -1,0 +1,4 @@
+{"task" : "buildMapping",
+       "inputdata" : [ "/mnt/hgfs/share_folder/2021_data/Area1/images/mando_Area1_build_19.tif", "/mnt/hgfs/share_folder/2021_data/Area1/point_clouds/lidar_Area1_build_19_1.pcd","/mnt/hgfs/share_folder/2021_data/oesm.tif","/mnt/hgfs/share_folder/2021_data/324_DEM.tif"],
+       "output" : "/mnt/hgfs/share_folder/2021_data/Area1/result"
+    }
