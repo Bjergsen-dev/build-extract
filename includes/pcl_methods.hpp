@@ -10,6 +10,8 @@ Description:Provide  functions  of PCD
 
 **************************************************************************/
 #pragma once
+
+#if 0
 #include <iostream>
 #include <math.h>
 #include <pcl/ModelCoefficients.h>
@@ -126,3 +128,6 @@ void filter_pcl_with_z(pcl::PointCloud<pcl::PointXYZ>::Ptr &cloud,float z1,float
  @prama:general_planar_height -- input cloud's gerneral elevation
  */
 int region_grow (pcl::PointCloud<pcl::PointXYZ>::Ptr &cloud,std::vector<PointCloud<PointXYZ>::Ptr> &res_vec);
+
+
+#endif

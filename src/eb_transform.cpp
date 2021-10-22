@@ -1,6 +1,4 @@
-#include "gdal_methods.hpp"
-
-
+#include "eb_transform.hpp"
 //get trans of tiff file
 /*
  @prama: const char * file_path_name -- file path to load the tif
@@ -12,7 +10,7 @@ void getTrans_of_TiffFile(const char * file_path_name, double* trans){
     poDataset = (GDALDataset *) GDALOpen(file_path_name, GA_ReadOnly );
     if( poDataset == NULL )
     {
-        cout<<"fail in open files!!!"<<endl;
+        EB_LOG("GDAL::ERROR :%s open failed!\n",file_path_name);
 
     }
     
@@ -24,6 +22,7 @@ void getTrans_of_TiffFile(const char * file_path_name, double* trans){
 
     
 }
+
 
 //get the row,column subnum in tiff file from spacial loacation geoX geoY
 /*
@@ -94,3 +93,27 @@ float get_elevation_frm_row_column(GDALDataset* poDataset, float* inBuf,int x, i
 	
 }
 
+
+
+//pcd to mat chansform
+/*
+@prama: vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> &boundary_cloud_vec -- the vector record bundary points in pcd
+@prama: double *trans -- localization transform prameters of tiff file (used in gdal)
+@prama: float translation_x,float translation_y -- the translation of x,y between pcd and tif file
+ */
+void pcd_to_mat(pcl::PointCloud<pcl::PointXYZ>::Ptr boundary_cloud,double *trans,eb_config_t *eb_config_ptr,eb_points_t  *boundary_pois){
+    
+        boundary_pois->points = (eb_point_t *)malloc(sizeof(eb_point_t)*boundary_cloud->points.size());
+        boundary_pois->point_size = boundary_cloud->points.size();
+        for(int i = 0 ; i < boundary_cloud->points.size(); i++){
+            boundary_pois->points[i].point_x = boundary_cloud->points[i].x + eb_config_ptr->transform_x;
+            boundary_pois->points[i].point_y = boundary_cloud->points[i].y + eb_config_ptr->transform_y;
+            boundary_pois->points[i].point_z = boundary_cloud->points[i].z + eb_config_ptr->transform_z;
+
+            boundary_pois->points[i].dx = get_row_column_frm_geoX_geoY(trans,boundary_pois->points[i].point_x,boundary_pois->points[i].point_y,1);
+            boundary_pois->points[i].dy = get_row_column_frm_geoX_geoY(trans,boundary_pois->points[i].point_x,boundary_pois->points[i].point_y,2);
+            
+        }
+    
+    
+}

@@ -1,6 +1,8 @@
 #include "checkCornerPoints.hpp"
 
 
+#if 0
+
 
 //dictance between two points
 /*
@@ -190,18 +192,7 @@ void mat_to_pcd(Mat &inputmat,pcl::PointCloud<pcl::PointXYZ>::Ptr &cloud,int mul
 }
 
 
-//GaussianBlur and ctgray the input img
-/*
- @prama: Mat &img -- input mat
- @prama: Mat &gray -- output mat after  GaussianBlur and ctgray
- */
-int gaussianBlur_and_ctgray(Mat &img , Mat &gray){
-    
-    Mat gass_img;
-    cv::GaussianBlur(img,gass_img,cv::Size(3,3),0);
-    cv::cvtColor(gass_img,gray,COLOR_RGB2GRAY);
-    return 0;
-}
+
 
 
 
@@ -267,30 +258,14 @@ int sobel_find_boundary(Mat &img, Mat &sobel_out){
     cv::addWeighted(res_1_2_3_4,0.5,res_5_6_7_8,0.5,0,sobel_out);
     cv::threshold(sobel_out, sobel_out, 50, 255,THRESH_BINARY);
     
-    mat_show("sobel_out",sobel_out,500);
+    //mat_show("sobel_out",sobel_out,500);
     
     return 1;
 
     
 }
  
-//find the boundaries in input mat with canny methods
-/*
-@prama: Mat &img -- input mat
-@prama: Mat &sobel_out -- output mat after convolution with canny kernals 
- */
-int canny_find_boundary(Mat &img , Mat &canny_out ){
-    
-    
-    Mat gray;
-    gaussianBlur_and_ctgray(img, gray);
-    //down sample
-	//pyrDown(img, img, Size(img.cols/2, img.rows/2), 4);
-	//通过canny算法找轮廓，这样 findcontours 的结果会好些
-	Canny(gray, canny_out, 30, 150, 3, true);
-	mat_show("canny_out",canny_out,500);
-    return 0;
-} 
+
  
  
 //get each boundary in img_out after canny or sobel convolution and regular the boundary  with DP method
@@ -313,32 +288,6 @@ int dp_find_boundary_keypoints(vector<Point> &contours,int level, vector<Vec4f> 
       
 	return 1;
 
-}
-
-//hough methd to find lines(not all boundaries) in boundaries given the canny or sobel way
-/*
- @prama: vector<Vec4f> &lines -- vector to record each line's begin point and end point
- @prama: Mat &img -- the original input mat read from image file waiting for Houghdraw the lines
- @prama; Mat &img_out -- the binaryzation mat contains the boundaries and it will be the input for hough method
- */
-int hough_find_lins(vector<Vec4f> &lines,Mat &img, Mat &img_out){
-
-    
-
-	//'1'生成极坐标时候的像素扫描步长，'CV_PI/180'生成极坐标时候的角度步长，'10'最小直线长度，'0'最大间隔（能构成一条直线） 
-	HoughLinesP(img_out,lines,1,CV_PI/180,30,0,10);
-    //HoughLinesP(img_out,lines,1,CV_PI/180,10,0,10);
-	Scalar color = Scalar(255);
-    Mat hough_img = Mat(img.size().height,img.size().width,CV_8UC1,Scalar(0));
-	for (size_t i = 0; i < lines.size(); i++)
-	{
-		Vec4f plines=lines[i];  //一个plines里边是四个点一条直线                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               
-	    line(hough_img,Point(plines[0],plines[1]),Point(plines[2],plines[3]),color,1,LINE_AA);
-        //cout<<lines[i]<<endl;
-	}
-	mat_show("hough_img",hough_img,500);
-
-    return 0;
 }
 
 
@@ -431,23 +380,6 @@ void order_line_begin_end(Vec4f &line_vec,Point begin_foot,Point end_foot){
     line_vec =  distance_btw_two_points(line_begin,begin_foot) < distance_btw_two_points(line_begin,end_foot)? line_vec:Vec4f(line_end.x,line_end.y,line_begin.x,line_begin.y);
 }
 
-
-//Mat show method 
-/*
- @prama const char* name -- window name 
- @prama Mat &mat -- input mat be shown later
- @prama int size -- window size
- */
-void mat_show(const char* name , Mat &mat, int size){
-     namedWindow(name,0);
-    resizeWindow(name,size,size);
-//     string out_file_name(name);
-//     out_file_name += ".tif";
-//     out_file_name = "/mnt/hgfs/share_folder/2021_data/Area3_result/"+out_file_name;
-//     imwrite(out_file_name, mat);
-    imshow(name, mat);
-    waitKey(0);
-}
 
 
 //get the longest line index in a lines vec
@@ -576,3 +508,4 @@ void readFileJson(std::string json_file_path, std::vector<std::string> &str_vec)
 }
 
 
+#endif 

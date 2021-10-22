@@ -11,7 +11,8 @@ Description:Provide  functions  of GDAL
 **************************************************************************/
 #pragma once
 
-#include "gdal_methods.hpp"
+#if 0
+
 #include "opencv2/opencv.hpp"
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/features2d/features2d.hpp"
@@ -20,6 +21,9 @@ Description:Provide  functions  of GDAL
 #include <fstream>
 #include <iostream>
 #include <iomanip>
+
+using namespace std;
+using namespace cv;
 
 
 ///create a struct for x_y_z  point
@@ -95,3 +99,6 @@ void resize_ele_and_get_normal_vec(vector<z_Point>&z_point_vec, vector<z_Point>&
  @prama: cv::Size size -- the input dom size
  */
 void write_to_objfile(const char * obj_file_path, vector<vector<z_Point>>&z_point_v_vec, vector<vector<z_Point>>&normal_est_v_vec,vector<z_Plane>&z_planes_vec,cv::Size size);
+
+
+#endif

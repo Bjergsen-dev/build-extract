@@ -7,10 +7,13 @@
 
 #include <iostream>
 #include <Eigen/Core>
+#include <list>
 
 #include "edge.hpp"
 #include "triangle.hpp"
 #include "cluster.hpp"
+#include "eb_features.hpp"
+#include "eb_common_defines.hpp"
 
 using std::cout;
 using std::endl;
@@ -21,6 +24,7 @@ public:
     // constructor
     DelaunayT() {}
     DelaunayT(const std::vector<A_Point2d> &points);
+    DelaunayT(const eb_points_t *eb_points_ptr);
     DelaunayT(const DelaunayT &delaunayT);
 
     // triangulate all vertex into triangle meshes
@@ -30,7 +34,77 @@ public:
 
     const std::vector<Edge> getEdges() const { return edges_;}
 
-    const std::vector<Edge> getBoundary() const { return boundary_;}
+    const std::vector<Edge> getBoundary() const {return boundary_;}
+
+    void getBoundary_pois(eb_points_t *delau_boudry_pois,eb_points_t *boundary_points) 
+    { 
+        std::list<Edge> edge_list;
+        edge_list.assign(boundary_.begin(),boundary_.end());     
+        std::list<Edge>::iterator iter = edge_list.begin();
+        std::vector<A_Point2d> push_to_contours2_left;
+        std::vector<A_Point2d> push_to_contours2_right;
+        int is_first_edge = 0;
+        while(!edge_list.empty()) {
+            if(iter == edge_list.end()) {
+                iter = edge_list.begin();
+            }
+            Edge ed = *iter;
+            if(is_first_edge == 0) {
+                push_to_contours2_left.push_back(ed.p1_);
+                push_to_contours2_right.push_back(ed.p2_);
+                is_first_edge = 1;
+                edge_list.erase(iter++);
+            } else {
+                A_Point2d left_point =  push_to_contours2_left[push_to_contours2_left.size() -1];
+                A_Point2d right_point =  push_to_contours2_right[push_to_contours2_right.size() -1];
+
+                if(ed.p2_ == left_point) {
+                    push_to_contours2_left.push_back(ed.p1_);
+                    edge_list.erase(iter++);
+                    continue;
+                }
+                if(ed.p2_ == right_point) {
+                    push_to_contours2_right.push_back(ed.p1_);
+                    edge_list.erase(iter++);
+                    continue;
+                }
+                if(ed.p1_ == left_point) {
+                    push_to_contours2_left.push_back(ed.p2_);
+                    edge_list.erase(iter++);
+                    continue;
+                }
+                if(ed.p1_ == right_point) {
+                    push_to_contours2_right.push_back(ed.p2_);
+                    edge_list.erase(iter++);
+                    continue;
+                }
+                iter++;
+            }
+
+        }
+        std::reverse(push_to_contours2_left.begin(),push_to_contours2_left.end());
+        push_to_contours2_left.insert(push_to_contours2_left.end(),
+                                    push_to_contours2_right.begin(),
+                                    push_to_contours2_right.end());
+
+        delau_boudry_pois->point_size = push_to_contours2_left.size();
+        delau_boudry_pois->points = (eb_point_t *) malloc(sizeof(eb_point_t) * 
+                                                        delau_boudry_pois->point_size);
+        for(int i = 0 ; i < push_to_contours2_left.size(); i++)
+        {
+            for(int j = 0; j < boundary_points->point_size; j++)
+            {
+                if(push_to_contours2_left[i][0] == boundary_points->points[j].dx &&
+                    push_to_contours2_left[i][1] == boundary_points->points[j].dy)
+                    {
+                        boundary_points->points[j].is_delaunay = 1;
+                        delau_boudry_pois->points[i] = boundary_points->points[j];
+                    }
+            }
+        }
+
+        EB_LOG("[EB::INFO] delau_boudry_points num is %d\n",delau_boudry_pois->point_size);
+    }
 
     const std::vector<Triangle> getTri() const { return triangles_;}
 
@@ -73,6 +147,31 @@ DelaunayT::DelaunayT(const std::vector<A_Point2d> &points)
     }
 }
 
+
+DelaunayT::DelaunayT(const eb_points_t *eb_points_ptr)
+{
+    std::vector<A_Point2d> points;
+    for(int i = 0; i < eb_points_ptr->point_size; i++)
+    {
+        eb_point_t poi = eb_points_ptr->points[i];
+        A_Point2d a_poi(poi.dx,poi.dy);
+        points.push_back(a_poi);
+    }
+    vertex_.clear();
+    vertex_.insert(vertex_.begin(), points.begin(), points.end());
+
+
+    edges_.clear();
+    triangles_.clear();
+    boundary_.clear();
+
+    if (!triangulate())
+    {
+        std::cerr << "Failed to triangulate this point cloud!";
+        abort();
+    }
+}
+
 bool DelaunayT::triangulate()
 {
     // Step1: Select a super triangle
@@ -99,6 +198,7 @@ bool DelaunayT::triangulate()
     // Step5: Compute the appropriate digging radius;
     computeR();
 
+    EB_LOG("[DELAUNAY::INFO] triangulate completed!\n");
     return true;
 }
 
@@ -336,6 +436,8 @@ bool DelaunayT::generateAlphaShape()
             break;
         }
     }
+
+    
 }
 
 bool DelaunayT::isIntegrity() const

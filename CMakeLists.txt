@@ -4,7 +4,7 @@ project( 3D_rebuild )
 set(CMAKE_CXX_FLAGS "-std=c++11")
 
 #build type
-set(CMAKE_BUILD_TYPE "Release")
+set(CMAKE_BUILD_TYPE "Debug")
 
 
 # 添加GDAL依赖
@@ -35,6 +35,7 @@ link_directories(${lib_DIR})
 include_directories( "/usr/include/eigen3" )
 
 include_directories(includes) #添加头文件
+include_directories(includes/delaunay_context) #添加头文件
  
 FILE(GLOB_RECURSE CURRENT_INCLUDE includes/*.hpp)
 FILE(GLOB_RECURSE CURRENT_SOURCES src/*.cpp)     #aux_source_directory(src CURRENT_SOURCES)

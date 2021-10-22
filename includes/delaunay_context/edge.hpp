@@ -6,6 +6,7 @@
 #define DELAUNAY_TRIANGULATION_EDGE_H
 
 #include <Eigen/Core>
+#include "eb_features.hpp"
 
 using A_Point2d = Eigen::Vector2d;
 

@@ -1,3 +1,5 @@
+#if 0
+
 #include "pcl_methods.hpp"
 
 //show cloud in PCLviwer
@@ -434,3 +436,5 @@ int region_grow (pcl::PointCloud<pcl::PointXYZ>::Ptr &cloud,std::vector<PointClo
   return (0);
 }
 
+
+#endif

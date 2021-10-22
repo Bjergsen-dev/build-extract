@@ -1,7 +1,7 @@
 
 #pragma once
+#if 0
 
-#include "gdal_methods.hpp"
 #include "fetch_building_three_d_points.hpp"
 
 void create_shp(const char* output_path,std::vector<std::vector<z_Point>> z_point_v_vec,int utm_num)
@@ -82,3 +82,4 @@ void create_shp(const char* output_path,std::vector<std::vector<z_Point>> z_poin
 
     std::cout<<"..........Write to shp file complete!"<<std::endl;
 }
+#endif

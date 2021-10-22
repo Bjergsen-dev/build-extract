@@ -1,4 +1,7 @@
+#if 0
+
 #include "fetch_building_three_d_points.hpp"
+#include "eb_transform.hpp"
 
 //change the pixel coodinate of building corner points to geo_X geo_Y elevation
 /*
@@ -286,3 +289,6 @@ void write_to_objfile(const char * obj_file_path, vector<vector<z_Point>>&z_poin
         
     }
 }
+
+
+#endif

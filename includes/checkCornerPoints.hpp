@@ -10,14 +10,13 @@ Description:Provide  functions  to find the corner points of build groof
 
 **************************************************************************/
 #pragma once
-
+#if 0 
 #include "opencv2/opencv.hpp"
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/features2d/features2d.hpp"
 #include "opencv2/core/core.hpp"
-#include "gdal_methods.hpp"
 #include "pcl_methods.hpp"
-#include <jsoncpp/json/json.h>
+#include <json/json.h>
 #include <stack>
 #include <cmath>
 #include <deque>
@@ -28,11 +27,13 @@ Description:Provide  functions  to find the corner points of build groof
 #include <list>
 #include <fstream>
 #include <math.h>
+#include "eb_features.hpp"
 
 //#include "edge.hpp"
 
 #include <vector>
 using namespace cv; 
+using namespace std;
 
 
 
@@ -71,30 +72,6 @@ Vec4f  get_lines_togethor(std::vector<Vec4f> &similar_lines);
  */
 bool decide_line_within_pcdBoudaryArea_or_not(Mat &pcd_boudary_mat,Vec4f &vec,float prameter);
 
-//pcd to mat chansform
-/*
-@prama: vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> &boundary_cloud_vec -- the vector record bundary points in pcd
-@prama: double *trans -- localization transform prameters of tiff file (used in gdal)
-@prama: float translation_x,float translation_y -- the translation of x,y between pcd and tif file
- */
-template<class T>
-void pcd_to_mat(vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> &boundary_cloud_vec,double *trans,float translation_x,float translation_y,vector<vector<T>> &contours){
-    
-    int i = 0;
-    for(pcl::PointCloud<pcl::PointXYZ>::Ptr boundary_cloud : boundary_cloud_vec){
-        vector<T> point_vec;
-        for(pcl::PointXYZ point : boundary_cloud->points){
-            float dcol = get_row_column_frm_geoX_geoY(trans,(point.x + translation_x),(point.y + translation_y),1);
-            float drow = get_row_column_frm_geoX_geoY(trans,(point.x + translation_x),(point.y + translation_y),2);
-            point_vec.push_back(T(dcol,drow));
-        }
-        i++;
-        contours.push_back(point_vec);
-    }
-    
-    
-}
-
 //mat to pcd (to use the pcd methods)
 /*
  @prama: Mat &inputmat -- input mat
@@ -117,12 +94,7 @@ int gaussianBlur_and_ctgray(Mat &img , Mat &gray);
  */
 int sobel_find_boundary(Mat &img, Mat &sobel_out);
 
-//find the boundaries in input mat with canny methods
-/*
-@prama: Mat &img -- input mat
-@prama: Mat &sobel_out -- output mat after convolution with canny kernals 
- */
-int canny_find_boundary(Mat &img , Mat &canny_out );
+
 
  
 //get each boundary in img_out after canny or sobel convolution and regular the boundary  with DP method
@@ -133,13 +105,7 @@ int canny_find_boundary(Mat &img , Mat &canny_out );
  */
 int dp_find_boundary_keypoints(vector<Point> &contours,int level, vector<Vec4f> &res_vec);
 
-//hough methd to find lines(not all boundaries) in boundaries given the canny or sobel way
-/*
- @prama: vector<Vec4f> &lines -- vector to record each line's begin point and end point
- @prama: Mat &img -- the original input mat read from image file waiting for Houghdraw the lines
- @prama; Mat &img_out -- the binaryzation mat contains the boundaries and it will be the input for hough method
- */
-int hough_find_lins(vector<Vec4f> &lines,Mat &img, Mat &img_out);
+
 
 //find the similar lines in input lines vector and group them
 /*
@@ -197,14 +163,6 @@ Point get_common_point_of_two_lines(Vec4f vec1,Vec4f vec2);
 
 //order the line's begin and end point with foot_vec_points's order
 void order_line_begin_end(Vec4f &line_vec,Point begin_foot,Point end_foot);
-
-//Mat show method 
-/*
- @prama const char* name -- window name 
- @prama Mat &mat -- input mat be shown later
- @prama int size -- window size
- */
-void mat_show(const char* name , Mat &mat, int size);
 
 //release the vector room
 template<class T>
@@ -266,3 +224,5 @@ void remove_wrong_lines(vector<int> wrong_indexes_vec, vector<T> &lines_vec){
     count++;
   }
 }
+
+#endif
