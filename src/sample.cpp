@@ -122,7 +122,7 @@ int main() {
     std::vector<PointCloud<PointXYZ>::Ptr> planars_cloud_vec = {cloud} ;
     
     //visualization the planar pcd
-#ifdef EB_DEBUG    
+#ifdef EB_DEBUG1    
     pcl::visualization::PCLVisualizer viewer("Planar Viewer");
     D3_view(viewer,planars_cloud_vec,cloud);
 #endif
@@ -130,13 +130,13 @@ int main() {
     // get the boundary points loud and record them in boundaries_cloud_vec
     estimateBorders(planars_cloud_vec,boundaries_cloud_vec,&eb_config); 
     //visualization the planar pcd
-#ifdef EB_DEBUG
+#ifdef EB_DEBUG1
     pcl::visualization::PCLVisualizer viewer1("boundary Viewer");
     D3_view(viewer1,boundaries_cloud_vec,cloud);
 #endif
     //pcl::io::savePCDFile(_output+"boundary_"+_name+".pcd",*(boundaries_cloud_vec[0]));
 
-#ifdef EB_DEBUG
+#ifdef EB_DEBUG1
    while (!viewer.wasStopped ())
   {
     viewer.spinOnce();
@@ -192,147 +192,7 @@ int main() {
     
     
     
-// //     std::cout<<"------------------strech the similar lines in hpough lines in boundary area-----------------------"<<std::endl<<std::endl;
-// //     /***********************************************strech the similar lines in hpough lines in boundary area*******************************************************/
-// //     vector<vector<Vec4f>> lines_v_vec;
-// //     float length_limit_each_line = 5;
-// //     float length_limit_between_two_lines = 30;
-// //     float lines_k_limit = 0.986;
-// //     float lines_b_limit = 5;
-// // 
-// //     //find similar lines and group them then record in lines_v_vec
-// //     find_the_similar_lines_in_lines_vec( length_limit_each_line, length_limit_between_two_lines, lines_k_limit, lines_b_limit, within_lines, lines_v_vec);
-// //     cout<<"lines_v_vec size :"<<lines_v_vec.size()<<endl;
-// // 
-// // 
-// //     //draw the lines in lines_v_vec
-// //     RNG rng(12345);
-// //     for(vector<Vec4f> lines_vec : lines_v_vec) {
-// //         Scalar r_color = Scalar(rng.uniform(0,255), rng.uniform(0,255), rng.uniform(0,255));
-// //         for(Vec4f test_vec : lines_vec) {
-// //             line(test_mat_1,Point(test_vec[0],test_vec[1]),Point(test_vec[2],test_vec[3]),r_color,2,LINE_AA);
-// //         }
-// //     }
-// //     
-// //     //free the vector
-// //     release_vector(within_lines);
-// //     
-// //     std::cout<<"------------------Combine and draw the similar lines in each group-----------------------"<<std::endl<<std::endl;
-// //     /***********************************************combine and draw the similar lines in each group*******************************************************/
-// //     vector<Vec4f> combine_lines;
-// //     //set the min line length
-// //     float min_line_length = 40;
-// //     for(vector<Vec4f> lines_vec : lines_v_vec) {
-// //         Vec4f combine_vec = get_lines_togethor(lines_vec);
-// //         if(distance_btw_two_points(Point(combine_vec[0],combine_vec[1]),Point(combine_vec[2],combine_vec[3])) > min_line_length){
-// //         combine_lines.push_back(combine_vec);
-// //         Scalar r_color = Scalar(255,255,255);
-// //         line(test_mat_2,Point(combine_vec[0],combine_vec[1]),Point(combine_vec[2],combine_vec[3]),r_color,2,LINE_AA);
-// //         }
-// //     }
-// //    
-// //     
-// //     //free the vector
-// //     release_vector(lines_v_vec);
-    
-//      std::cout<<"------------------Decide the lines in combine_lines who cross enough points-----------------------"<<std::endl<<std::endl; 
-//      /*********************************************** decide the lines in combine_lines who cross enough points*******************************************************/
-//     float distance_limit =15;
-//     int min_cloud_points_num = 3;//mininum of points been exsord to line
 
-    
-//     vector<Vec4f> filter_combine_lines;//record the lines after filter
-//     vector<int> filter_combine_lines_mid_point_indexnum;//record the lines' mid point num after filter   ready for lines' sort
-//     vector<vector<int>> filter_line_cross_points;
-//     vector<vector<Point>> filter_line_cross_points_foots;
-//     vector<vector<float>> filter_line_cross_points_foots_dis;
-
-//     for(int j =0; j<within_lines.size(); j++) {
-//         Vec4f line_vec = within_lines[j];
-//         vector<int> tem_vec;
-//         vector<Point> tem_foot_vec;
-//         vector<float> tem_foot_dis_vec;
-//         cout<<"line_"<<j<<": ";
-//         for(int i=0; i<contours2.size(); i++) {
-//             Point p_point = contours2[i];
-//             float k = (line_vec[3] - line_vec[1])/(line_vec[2] - line_vec[0]);
-//             float b = line_vec[1] - k*line_vec[0];
-//             float x0 = (k*(p_point.y - b) + p_point.x)/(pow(k,2) + 1);
-//             float y0 = k*x0 + b;
-
-
-//             if(((line_vec[0]==line_vec[2] && y0>=line_vec[1]&&y0<=line_vec[3])||(x0>=line_vec[0]&&x0<=line_vec[2]))&&(distance_btw_two_points(p_point,Point(x0,y0)) < distance_limit)) {
-                
-//                 bool foot_is_new_or_not = true;
-//                 for(Point pp : tem_foot_vec){
-//                     if(distance_btw_two_points(pp,Point(x0,y0)) < 3){
-//                         foot_is_new_or_not = false;
-//                     }
-//                 }
-                
-//                 if(foot_is_new_or_not){
-//                 tem_vec.push_back(i);
-//                 tem_foot_vec.push_back(Point(x0,y0));
-//                 tem_foot_dis_vec.push_back(distance_btw_two_points(p_point,Point(x0,y0)));
-//                 }
-
-//             }
-//         }
-    
-        
-//         //to do something here (seg)
-//         int jj =0;
-//         while(tem_vec.size() != 0){
-//             if(jj == tem_vec.size() -1){
-//                 if(tem_foot_vec.size() >= min_cloud_points_num){
-//                     cout<<tem_vec[0]<<"----"<<tem_vec[tem_vec.size()-1]<<endl;
-//                 filter_combine_lines_mid_point_indexnum.push_back(tem_vec[tem_vec.size()/2]);
-//                 filter_line_cross_points.push_back(tem_vec);
-//                 filter_line_cross_points_foots.push_back(tem_foot_vec);
-//                 filter_combine_lines.push_back(Vec4f(tem_foot_vec[0].x,tem_foot_vec[0].y,tem_foot_vec[tem_foot_vec.size()-1].x,tem_foot_vec[tem_foot_vec.size()-1].y));
-//                 filter_line_cross_points_foots_dis.push_back(tem_foot_dis_vec);
-//                 }
-                
-
-//                 break;
-//             }
-            
-//             if((tem_vec[jj+1] - tem_vec[jj]) >= min_cloud_points_num){
-//                 vector<int> seg_1(tem_vec.begin(),tem_vec.begin()+jj+1);
-//                 tem_vec.erase(tem_vec.begin(),tem_vec.begin()+jj+1);
-//                 vector<Point> seg_foot_1(tem_foot_vec.begin(),tem_foot_vec.begin()+jj+1);
-//                 tem_foot_vec.erase(tem_foot_vec.begin(),tem_foot_vec.begin()+jj+1);
-//                 vector<float> seg_foot_dis_1(tem_foot_dis_vec.begin(),tem_foot_dis_vec.begin()+jj+1);
-//                 tem_foot_dis_vec.erase(tem_foot_dis_vec.begin(),tem_foot_dis_vec.begin()+jj+1);
-//                 if(seg_foot_1.size() >= min_cloud_points_num){
-//                     cout<<seg_1[0]<<"----"<<seg_1[seg_1.size()-1]<<endl;
-//                 filter_combine_lines_mid_point_indexnum.push_back(seg_1[seg_1.size()/2]);
-//                 filter_line_cross_points.push_back(seg_1);
-//                 filter_line_cross_points_foots.push_back(seg_foot_1);
-//                 filter_combine_lines.push_back(Vec4f(seg_foot_1[0].x,seg_foot_1[0].y,seg_foot_1[seg_foot_1.size()-1].x,seg_foot_1[seg_foot_1.size()-1].y));
-//                 filter_line_cross_points_foots_dis.push_back(seg_foot_dis_1);
-//                 }
-                
-                
-
-//                 jj=0;
-//                 continue;
-//             }
-            
-//             jj++;
-//         } 
-//     }
-        
-
-//         //draw the line after seg and each foots
-//         for(vector<Point> tt_foot_vec : filter_line_cross_points_foots){
-//             for(Point foot : tt_foot_vec){
-//                 circle(points_to_lines_test_mat,foot,5,Scalar(0,0,0),1);
-//                 //circle(similar_filter_combine_similar_lines_mat,foot,5,Scalar(0,0,0),1);
-//             }
-            
-//             line(points_to_lines_test_mat,tt_foot_vec[0],tt_foot_vec[tt_foot_vec.size() -1],Scalar(0,0,255),2,LINE_AA);
-//         }
 
     
     

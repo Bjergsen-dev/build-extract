@@ -43,34 +43,130 @@ void buffer_filter(eb_features_t * eb_futures_ptr, eb_config_t *eb_config_ptr)
             eb_config_ptr->buffer_filter_f
         ))
         {
+            tmp_lines[eb_futures_ptr->buffer_filter_lines.line_size] = 
+                                eb_futures_ptr->hough_lines.lines[i];
+            int tmp_index = eb_futures_ptr->buffer_filter_lines.line_size;
             eb_futures_ptr->buffer_filter_lines.line_size++;
-            tmp_lines[i] = eb_futures_ptr->hough_lines.lines[i];
 
+            
             cv::line(eb_futures_ptr->eb_mats.buf_filter_image,
-                    cv::Point(tmp_lines[i].point_beg.dx,tmp_lines[i].point_beg.dy),
-                    cv::Point(tmp_lines[i].point_end.dx,tmp_lines[i].point_end.dy),
+                    cv::Point(tmp_lines[tmp_index].point_beg.dx,tmp_lines[tmp_index].point_beg.dy),
+                    cv::Point(tmp_lines[tmp_index].point_end.dx,tmp_lines[tmp_index].point_end.dy),
                     cv::Scalar(255),
                     1,
                     CV_AA);
+            #ifdef EB_DEBUG
+            EB_LOG("[EB_DEBUG::] %d-->(%f,%f)--(%f,%f)\n",
+                                tmp_index,
+                                tmp_lines[tmp_index].point_beg.dx,
+                                tmp_lines[tmp_index].point_beg.dy,
+                                tmp_lines[tmp_index].point_end.dx,
+                                tmp_lines[tmp_index].point_end.dy);
+            #endif
         }
     }
+    #if 1
     eb_futures_ptr->buffer_filter_lines.lines = (eb_line_t *) malloc(sizeof(eb_line_t) *
-                                                                     eb_futures_ptr->buffer_filter_lines.line_size);
+                                                                       eb_futures_ptr->buffer_filter_lines.line_size);
     memcpy(eb_futures_ptr->buffer_filter_lines.lines,
             tmp_lines,
             eb_futures_ptr->buffer_filter_lines.line_size*sizeof(eb_line_t));
-
     free(tmp_lines);
     tmp_lines = NULL;
+    #endif
 
+
+    #ifdef EB_DEBUG
+    EB_LOG("\n\n");
+    for(int i = 0; i < eb_futures_ptr->buffer_filter_lines.line_size; i++)
+    {
+        EB_LOG("[EB_DEBUG::] %d-->(%f,%f)--(%f,%f)\n",
+                                i,
+                                eb_futures_ptr->buffer_filter_lines.lines[i].point_beg.dx,
+                                eb_futures_ptr->buffer_filter_lines.lines[i].point_beg.dy,
+                                eb_futures_ptr->buffer_filter_lines.lines[i].point_end.dx,
+                                eb_futures_ptr->buffer_filter_lines.lines[i].point_end.dy);
+    }
+    #endif
     mat_show("buffer_filter_image",
             eb_futures_ptr->eb_mats.buf_filter_image,
             MAT_SIZE);
 
-    EB_LOG("[EB::INFO] buffer filter completed!\n");
+    EB_LOG("[EB::INFO] buffer filter completed，line sum is %d!\n",eb_futures_ptr->buffer_filter_lines.line_size);
 }
 
-static void adsorbent_dis(eb_line_t *line, eb_point_t *point,int point_index, double adsorb_thresd)
+typedef struct eb_adsorb_info
+{
+    /* data */
+    int index;
+    double scale;
+    double adsorb_dis;
+}eb_adsorb_info_t;
+
+
+static void adsorbsent_check(eb_line_t *line,int line_index, eb_points_t *points, std::vector<eb_adsorb_info_t> &poi_index,double adsorb_thresd)
+{
+    for(int i  = 0; i<points->point_size; i++)
+    {
+        double a = sqrt(pow((line->point_beg.dx - line->point_end.dx),2) 
+                    + pow((line->point_beg.dy - line->point_end.dy),2));
+
+        double b = sqrt(pow((line->point_beg.dx - points->points[i].dx),2) 
+                        + pow((line->point_beg.dy - points->points[i].dy),2));
+
+        double c = sqrt(pow((points->points[i].dx - line->point_end.dx),2) 
+                        + pow((points->points[i].dy - line->point_end.dy),2));
+
+        if(a+b > c+MIN_DOUBLE && a+c > b +MIN_DOUBLE && b+c > a + MIN_DOUBLE)
+        {
+            double cos_b = (c*c + a*a - b*b)/(2*c*a+MIN_DOUBLE);
+            double cos_c = (b*b + a*a - c*c)/(2*b*a+MIN_DOUBLE);
+
+            if(cos_b < 0 || cos_c < 0)
+            {
+                continue ;
+            }
+
+            if(sqrt(1-cos_c*cos_c)*b > adsorb_thresd)
+            {
+                continue;
+            }
+            eb_adsorb_info_t tmp_info;
+            tmp_info.index = i;
+            tmp_info.scale = cos_c*b / a;
+            tmp_info.adsorb_dis = sqrt(1-cos_c*cos_c)*b;
+            poi_index.push_back(tmp_info);
+            
+        }
+        else
+        {
+            if(a > b && a > c)
+            {
+                continue ;
+            }
+            eb_adsorb_info_t tmp_info;
+            tmp_info.index = i;
+            double d = sqrt(pow((line->point_beg.dx - points->points[i].dx),2) 
+                    + pow((line->point_beg.dy - points->points[i].dy),2));
+            tmp_info.scale = d/a;
+            tmp_info.adsorb_dis = 0.;
+            poi_index.push_back(tmp_info);
+            EB_LOG("[EB::WARNING] point %d is in the line %d!!!\n",i,line_index);
+            continue ;
+        }
+    }
+
+    EB_LOG("[EB_INFO::] line %d is adsorbed %d points.\n",line_index,poi_index.size());
+    
+} 
+
+#if 0
+static void adsorbent_dis(eb_line_t *line, eb_point_t *point,int point_index, double adsorb_thresd
+                            #ifdef EB_DEBUG
+                            ,
+                            bool ass
+                            #endif
+                            )
 {
     double a = sqrt(pow((line->point_beg.dx - line->point_end.dx),2) 
                     + pow((line->point_beg.dy - line->point_end.dy),2));
@@ -91,8 +187,21 @@ static void adsorbent_dis(eb_line_t *line, eb_point_t *point,int point_index, do
             return ;
         }
 
+        if(sqrt(1-cos_c*cos_c)*b > adsorb_thresd)
+        {
+            return;
+        }
+
+
+
         line->adsorbent.adsorbent_dis[line->adsorbent.adsorbent_num] = sqrt(1-cos_c*cos_c)*b;
-        line->adsorbent.adsorbent_foot[line->adsorbent.adsorbent_num] = line->point_beg;
+
+        line->adsorbent.adsorbent_foot[line->adsorbent.adsorbent_num].dx = line->point_beg.dx;
+        line->adsorbent.adsorbent_foot[line->adsorbent.adsorbent_num].dy = line->point_beg.dy;
+        line->adsorbent.adsorbent_foot[line->adsorbent.adsorbent_num].is_delaunay = line->point_beg.is_delaunay;
+        line->adsorbent.adsorbent_foot[line->adsorbent.adsorbent_num].point_x = line->point_beg.point_x;
+        line->adsorbent.adsorbent_foot[line->adsorbent.adsorbent_num].point_y = line->point_beg.point_y;
+        line->adsorbent.adsorbent_foot[line->adsorbent.adsorbent_num].point_z = line->point_beg.point_z;
 
         double scale = cos_c*b / a;
         line->adsorbent.adsorbent_foot[line->adsorbent.adsorbent_num].dx += 
@@ -102,7 +211,21 @@ static void adsorbent_dis(eb_line_t *line, eb_point_t *point,int point_index, do
                             (line->point_end.dy - line->point_beg.dy) * scale;
         line->adsorbent.adsorbent_index[line->adsorbent.adsorbent_num] = point_index;
         line->adsorbent.adsorbent_num++;
-        
+
+        #ifdef EB_DEBUG
+        if(ass)
+        {
+            EB_LOG("[EB_DEBUG::] %d--> (%f,%f)--(%f,%f)  (%f,%f)\n",
+                line->adsorbent.adsorbent_num,
+                line->point_beg.dx,
+                line->point_beg.dy,
+                line->point_end.dx,
+                line->point_end.dy,
+                point->dx,
+                point->dy);
+        }
+        #endif
+
         return;
     }
     else
@@ -118,10 +241,38 @@ static void adsorbent_dis(eb_line_t *line, eb_point_t *point,int point_index, do
 
     
 }
+#endif
 
+
+static void adsorbent_dis(eb_line_t *line,std::vector<eb_adsorb_info_t> &poi_index)
+{
+    for(int i = 0; i < poi_index.size(); i++)
+    {
+        line->adsorbent.adsorbent_dis[line->adsorbent.adsorbent_num] = poi_index[i].adsorb_dis;
+
+        line->adsorbent.adsorbent_foot[line->adsorbent.adsorbent_num].dx = line->point_beg.dx;
+        line->adsorbent.adsorbent_foot[line->adsorbent.adsorbent_num].dy = line->point_beg.dy;
+        line->adsorbent.adsorbent_foot[line->adsorbent.adsorbent_num].is_delaunay = line->point_beg.is_delaunay;
+        line->adsorbent.adsorbent_foot[line->adsorbent.adsorbent_num].point_x = line->point_beg.point_x;
+        line->adsorbent.adsorbent_foot[line->adsorbent.adsorbent_num].point_y = line->point_beg.point_y;
+        line->adsorbent.adsorbent_foot[line->adsorbent.adsorbent_num].point_z = line->point_beg.point_z;
+
+        line->adsorbent.adsorbent_foot[line->adsorbent.adsorbent_num].dx += 
+                            (line->point_end.dx - line->point_beg.dx) * poi_index[i].scale;
+
+        line->adsorbent.adsorbent_foot[line->adsorbent.adsorbent_num].dy += 
+                            (line->point_end.dy - line->point_beg.dy) * poi_index[i].scale;
+        line->adsorbent.adsorbent_index[line->adsorbent.adsorbent_num] = poi_index[i].index;
+        line->adsorbent.adsorbent_num++;
+    }
+}
+
+
+#if 0
 void adsorbent_filter(eb_features_t * eb_futures_ptr, eb_config_t *eb_config_ptr)
 {
-
+    int absord_line_num = 0;
+    
     for(int i = 0; i<eb_futures_ptr->buffer_filter_lines.line_size; i++ )
     {
         eb_futures_ptr->buffer_filter_lines.lines[i].adsorbent.adsorbent_index = 
@@ -134,31 +285,119 @@ void adsorbent_filter(eb_features_t * eb_futures_ptr, eb_config_t *eb_config_ptr
         (double *)malloc(sizeof(double) * eb_futures_ptr->delau_boundary_pois.point_size);
 
 
+        #ifdef EB_DEBUG
+        EB_LOG("[EB_DEBUG::] absord filter is processing line %d\n",i);
+        #endif
         for(int j = 0; j < eb_futures_ptr->delau_boundary_pois.point_size; j++)
         {
+            #ifdef EB_DEBUG
+            EB_LOG("    [EB_DEBUG::] absord filter is processing point %d\n",j);
+            bool PRINT_ABSORD = 0;
+            if(i == 15 && j == 57)
+            {
+                PRINT_ABSORD = 1;
+            }
+            else
+            {
+                PRINT_ABSORD = 0;
+            }
+            #endif
+
+
+
+
+
             adsorbent_dis(&eb_futures_ptr->buffer_filter_lines.lines[i],
                             &eb_futures_ptr->delau_boundary_pois.points[j],
                             j,
-                            eb_config_ptr->min_adsorb_dis);
+                            eb_config_ptr->min_adsorb_dis
+                            #ifdef EB_DEBUG
+                            ,
+                            PRINT_ABSORD
+                            #endif
+                            );
         }
 
         if(eb_futures_ptr->buffer_filter_lines.lines[i].adsorbent.adsorbent_num > 
             eb_config_ptr->min_adsorb_num)
             {
-                for(int k = 0; k < eb_futures_ptr->buffer_filter_lines.lines[i].adsorbent.adsorbent_num; k++)
+                int absord_num = eb_futures_ptr->buffer_filter_lines.lines[i].adsorbent.adsorbent_num;
+                int rand_r = rand()%255;
+                int rand_g = rand()%255;
+                int rand_b = rand()%255;
+                absord_line_num++;
+                // #ifdef EB_DEBUG
+                // if(i != 0)continue;
+                // #endif
+                for(int k = 0; k < absord_num; k++)
                 {
                     cv::circle(eb_futures_ptr->eb_mats.adsorb_filter_image,
                             cv::Point(eb_futures_ptr->buffer_filter_lines.lines[i].adsorbent.adsorbent_foot[k].dx,
                                         eb_futures_ptr->buffer_filter_lines.lines[i].adsorbent.adsorbent_foot[k].dy),
-                                        2,
-                                        cv::Scalar(255),
+                                        1,
+                                        cv::Scalar(rand_r,rand_g,rand_b),
                                         1,
                                         CV_AA);
-                }
-                
+                }              
             }
     }
-
+    EB_LOG("[EB INFO::] absord_line_num is %d\n",absord_line_num);
     mat_show("adsorbent_image",eb_futures_ptr->eb_mats.adsorb_filter_image,MAT_SIZE);
 }
+
+#endif 
+
+
+
+void adsorbent_filter(eb_features_t * eb_futures_ptr, eb_config_t *eb_config_ptr)
+{
+    int absord_line_num = 0;
+    
+    for(int i = 0; i<eb_futures_ptr->buffer_filter_lines.line_size; i++ )
+    {
+        std::vector<eb_adsorb_info_t> poi_index;
+        adsorbsent_check(&eb_futures_ptr->buffer_filter_lines.lines[i],
+                        i,
+                        &eb_futures_ptr->delau_boundary_pois,
+                        poi_index,
+                        eb_config_ptr->min_adsorb_dis);
+
+        eb_futures_ptr->buffer_filter_lines.lines[i].adsorbent.adsorbent_index = 
+        (int *)malloc(sizeof(int) * poi_index.size());
+
+        eb_futures_ptr->buffer_filter_lines.lines[i].adsorbent.adsorbent_foot = 
+        (eb_point_t *)malloc(sizeof(eb_point_t) * poi_index.size());
+
+        eb_futures_ptr->buffer_filter_lines.lines[i].adsorbent.adsorbent_dis = 
+        (double *)malloc(sizeof(double) * poi_index.size());
+
+
+        adsorbent_dis(&eb_futures_ptr->buffer_filter_lines.lines[i],poi_index);
+
+        if(eb_futures_ptr->buffer_filter_lines.lines[i].adsorbent.adsorbent_num > 
+            eb_config_ptr->min_adsorb_num)
+            {
+                int absord_num = eb_futures_ptr->buffer_filter_lines.lines[i].adsorbent.adsorbent_num;
+                int rand_r = rand()%255;
+                int rand_g = rand()%255;
+                int rand_b = rand()%255;
+                absord_line_num++;
+                // #ifdef EB_DEBUG
+                // if(i != 0)continue;
+                // #endif
+                for(int k = 0; k < absord_num; k++)
+                {
+                    cv::circle(eb_futures_ptr->eb_mats.adsorb_filter_image,
+                            cv::Point(eb_futures_ptr->buffer_filter_lines.lines[i].adsorbent.adsorbent_foot[k].dx,
+                                        eb_futures_ptr->buffer_filter_lines.lines[i].adsorbent.adsorbent_foot[k].dy),
+                                        1,
+                                        cv::Scalar(rand_r,rand_g,rand_b),
+                                        1,
+                                        CV_AA);
+                }              
+            }
+    }
+    mat_show("adsorbent_image",eb_futures_ptr->eb_mats.adsorb_filter_image,MAT_SIZE);
+}
+
 

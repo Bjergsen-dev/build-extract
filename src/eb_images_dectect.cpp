@@ -90,7 +90,7 @@ void init_mats(eb_mats_t *mats,const char *image_path)
     mats->hough_image = Mat(mats->image_height,mats->image_width,CV_8UC1,Scalar(0));
     mats->buffer_image = Mat(mats->image_height,mats->image_width,CV_8UC1,Scalar(0));
     mats->buf_filter_image = Mat(mats->image_height,mats->image_width,CV_8UC1,Scalar(0));
-    mats->adsorb_filter_image = Mat(mats->image_height,mats->image_width,CV_8UC1,Scalar(0));
+    mats->adsorb_filter_image = Mat(mats->image_height,mats->image_width,CV_8UC3,Scalar(255,255,255));
 
     EB_LOG("[CV::INFO] mats init completed！\n");
 }

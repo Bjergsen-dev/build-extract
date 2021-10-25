@@ -10,7 +10,7 @@ canny_thd_2: 150
 hough_thd_1: 1
 hough_thd_2: 0.01745329
 hough_thd_3: 30
-hough_thd_4: 0
+hough_thd_4: 10.
 hough_thd_5: 10
 pcl_filter_z1: 87
 pcl_filter_z2: 95

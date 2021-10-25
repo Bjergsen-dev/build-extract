@@ -27,6 +27,7 @@ typedef struct eb_config
     double hough_thd_5;
 
 
+
     double pcl_filter_z1;
     double pcl_filter_z2;
 
