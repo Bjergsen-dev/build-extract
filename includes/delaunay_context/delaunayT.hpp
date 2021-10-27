@@ -98,6 +98,8 @@ public:
                     push_to_contours2_left[i][1] == boundary_points->points[j].dy)
                     {
                         boundary_points->points[j].is_delaunay = 1;
+                        boundary_points->points[j].is_adsorbed = 0;
+                        boundary_points->points[j].adsorb_line_idx = -1;
                         delau_boudry_pois->points[i] = boundary_points->points[j];
                     }
             }

@@ -7,4 +7,8 @@ void buffer_filter(eb_features_t * eb_futures_ptr, eb_config_t *eb_config_ptr);
 
 void adsorbent_filter(eb_features_t * eb_futures_ptr, eb_config_t *eb_config_ptr);
 
+void eb_update_boundary_pois(eb_features_t * eb_futures_ptr,eb_config_t *eb_config);
+
+void generate_roof(eb_features_t *eb_features_ptr,eb_config_t *eb_config_ptr,eb_roof_t *roof_ptr);
+
 #endif

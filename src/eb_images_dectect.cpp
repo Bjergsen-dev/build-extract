@@ -88,9 +88,14 @@ void init_mats(eb_mats_t *mats,const char *image_path)
     mats->image_width = mats->input_image.cols;
     mats->image_height = mats->input_image.rows;
     mats->hough_image = Mat(mats->image_height,mats->image_width,CV_8UC1,Scalar(0));
+    mats->boundary_image = Mat(mats->image_height,mats->image_width,CV_8UC1,Scalar(0));
     mats->buffer_image = Mat(mats->image_height,mats->image_width,CV_8UC1,Scalar(0));
     mats->buf_filter_image = Mat(mats->image_height,mats->image_width,CV_8UC1,Scalar(0));
     mats->adsorb_filter_image = Mat(mats->image_height,mats->image_width,CV_8UC3,Scalar(255,255,255));
+    mats->adsorb_update_image = Mat(mats->image_height,mats->image_width,CV_8UC3,Scalar(255,255,255));
+    mats->simplify_lines_image = Mat(mats->image_height,mats->image_width,CV_8UC3,Scalar(255,255,255));
+    mats->reset_lines_image = Mat(mats->image_height,mats->image_width,CV_8UC3,Scalar(255,255,255));
+    
 
     EB_LOG("[CV::INFO] mats init completed！\n");
 }
@@ -104,7 +109,7 @@ void init_features(eb_features_t *features)
     EB_LOG("[EB::INFO] features size init completed！\n");
 }
 
-void set_buffer_mat(cv::Mat &buffer_mat ,eb_points_t *delau, eb_config_t *config_ptr)
+void set_buffer_mat(cv::Mat &boundary_mat,cv::Mat &buffer_mat ,eb_points_t *delau, eb_config_t *config_ptr)
 {
     Mat dilateElement = getStructuringElement(MORPH_RECT, 
                                             Size(config_ptr->buffer_matrix_size, 
@@ -119,11 +124,20 @@ void set_buffer_mat(cv::Mat &buffer_mat ,eb_points_t *delau, eb_config_t *config
             cv::Scalar(255),
             1,
             CV_AA);
+
+        circle(boundary_mat,
+                cv::Point(delau->points[i].dx,delau->points[i].dy),
+                2,
+                cv::Scalar(255),
+                2,
+                CV_AA);
     }
 
     dilate(buffer_mat, buffer_mat, dilateElement);
 
+    mat_show("boundary_image",boundary_mat,MAT_SIZE);
     mat_show("boundary_buffer",buffer_mat,MAT_SIZE);
+    
 }
 
 

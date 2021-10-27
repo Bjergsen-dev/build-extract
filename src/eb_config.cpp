@@ -33,6 +33,7 @@ static void print_eb_config(eb_config_t * eb_config_ptr)
     EB_LOG("[EB::INFO] buffer_filter_f: %f\n",eb_config_ptr->buffer_filter_f);
     EB_LOG("[EB::INFO] min_adsorb_num: %d\n",eb_config_ptr->min_adsorb_num);
     EB_LOG("[EB::INFO] min_adsorb_dis: %lf\n",eb_config_ptr->min_adsorb_dis);
+    EB_LOG("[EB::INFO] min_direct_trd: %lf\n",eb_config_ptr->min_direct_trd);
     EB_LOG("*******************EB PARAM CONFIG*********************\n\n");
 
     print_file_config(&eb_config_ptr->file_config);
@@ -77,6 +78,8 @@ void read_eb_config(eb_config_t * eb_config_ptr, const char * file_path)
     fscanf(fp,"buffer_filter_f: %f\n",&eb_config_ptr->buffer_filter_f);
     fscanf(fp,"min_adsorb_num: %d\n",&eb_config_ptr->min_adsorb_num);
     fscanf(fp,"min_adsorb_dis: %lf\n",&eb_config_ptr->min_adsorb_dis);
+    fscanf(fp,"min_direct_trd: %lf\n",&eb_config_ptr->min_direct_trd);
+    
  
     fclose(fp);
 

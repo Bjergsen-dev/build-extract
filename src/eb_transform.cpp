@@ -112,6 +112,9 @@ void pcd_to_mat(pcl::PointCloud<pcl::PointXYZ>::Ptr boundary_cloud,double *trans
 
             boundary_pois->points[i].dx = get_row_column_frm_geoX_geoY(trans,boundary_pois->points[i].point_x,boundary_pois->points[i].point_y,1);
             boundary_pois->points[i].dy = get_row_column_frm_geoX_geoY(trans,boundary_pois->points[i].point_x,boundary_pois->points[i].point_y,2);
+
+            boundary_pois->points[i].is_delaunay = 0;
+            boundary_pois->points[i].is_adsorbed = 0;
             
         }
     

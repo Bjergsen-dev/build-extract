@@ -46,6 +46,8 @@ typedef struct eb_config
     int min_adsorb_num;
     double min_adsorb_dis;
 
+    double min_direct_trd;
+
 
 
     

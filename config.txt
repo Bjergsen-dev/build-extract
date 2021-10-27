@@ -1,6 +1,6 @@
 task: build_extract
-image_path: /home/jaxzhong/share_folder/2021_data/Area1/images/mando_Area1_build_3.tif
-lidar_path: /home/jaxzhong/share_folder/2021_data/Area1/point_clouds/lidar_Area1_build_3.pcd
+image_path: /home/jaxzhong/share_folder/2021_data/Area1/images/mando_Area1_build_12.tif
+lidar_path: /home/jaxzhong/share_folder/2021_data/Area1/point_clouds/lidar_Area1_build_12_1.pcd
 oesm_path: ../oesm/oesm.tif
 dem_path: ../dem/324_DEM.tif
 output_path: ../results/Area1_result
@@ -12,9 +12,9 @@ hough_thd_2: 0.01745329
 hough_thd_3: 30
 hough_thd_4: 10.
 hough_thd_5: 10
-pcl_filter_z1: 87
-pcl_filter_z2: 95
-pcl_estimate_thd: 0.39269908
+pcl_filter_z1: 84
+pcl_filter_z2: 93
+pcl_estimate_thd: 1.0
 transform_x: 493213.86
 transform_y: 5419721.72
 transform_z: 200
@@ -22,3 +22,4 @@ buffer_matrix_size: 15
 buffer_filter_f: 0.5
 min_adsorb_num: 3
 min_adsorb_dis: 15.0
+min_direct_trd: 0.98480775301221

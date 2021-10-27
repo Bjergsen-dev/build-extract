@@ -122,7 +122,7 @@ int main() {
     std::vector<PointCloud<PointXYZ>::Ptr> planars_cloud_vec = {cloud} ;
     
     //visualization the planar pcd
-#ifdef EB_DEBUG1    
+#ifdef EB_PCL_VISUAL    
     pcl::visualization::PCLVisualizer viewer("Planar Viewer");
     D3_view(viewer,planars_cloud_vec,cloud);
 #endif
@@ -130,13 +130,13 @@ int main() {
     // get the boundary points loud and record them in boundaries_cloud_vec
     estimateBorders(planars_cloud_vec,boundaries_cloud_vec,&eb_config); 
     //visualization the planar pcd
-#ifdef EB_DEBUG1
+#ifdef EB_PCL_VISUAL
     pcl::visualization::PCLVisualizer viewer1("boundary Viewer");
     D3_view(viewer1,boundaries_cloud_vec,cloud);
 #endif
     //pcl::io::savePCDFile(_output+"boundary_"+_name+".pcd",*(boundaries_cloud_vec[0]));
 
-#ifdef EB_DEBUG1
+#ifdef EB_PCL_VISUAL
    while (!viewer.wasStopped ())
   {
     viewer.spinOnce();
@@ -175,7 +175,8 @@ int main() {
     delaunayT.getBoundary_pois(&eb_extract_features.delau_boundary_pois,
                                 &eb_extract_features.boundary_points);
     
-    set_buffer_mat(eb_extract_features.eb_mats.buffer_image,
+    set_buffer_mat(eb_extract_features.eb_mats.boundary_image,
+                    eb_extract_features.eb_mats.buffer_image,
                     &eb_extract_features.delau_boundary_pois,
                     &eb_config);
 
@@ -183,6 +184,12 @@ int main() {
     buffer_filter(&eb_extract_features,&eb_config);
     
     adsorbent_filter(&eb_extract_features,&eb_config);
+
+    eb_update_boundary_pois(&eb_extract_features,&eb_config);
+
+    eb_roof_t roof_ptr;
+
+    generate_roof(&eb_extract_features,&eb_config,&roof_ptr);
     
     
     

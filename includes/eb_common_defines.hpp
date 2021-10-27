@@ -9,5 +9,6 @@
 #define MAT_SIZE 500
 #define MIN_DOUBLE 1E-6
 #define EB_DEBUG
+//#define EB_PCL_VISUAL
 
 #endif

@@ -108,12 +108,12 @@ int estimateBorders(std::vector<PointCloud<PointXYZ>::Ptr> &planars_cloud_vec,st
      
     PointCloud<PointXYZ>::Ptr cloud = planars_cloud_vec[i]; 
     
-    float reforn = 10*computeCloudResolution(cloud,4);
+  float reforn = 10*computeCloudResolution(cloud,4);
 	pcl::PointCloud<pcl::Boundary> boundaries; //保存边界估计结果
 	pcl::BoundaryEstimation<pcl::PointXYZ, pcl::Normal, pcl::Boundary> boundEst; //定义一个进行边界特征估计的对象
 	pcl::NormalEstimation<pcl::PointXYZ, pcl::Normal> normEst; //定义一个法线估计的对象
 	pcl::PointCloud<pcl::Normal>::Ptr normals(new pcl::PointCloud<pcl::Normal>); //保存法线估计的结果 
-    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_boundary (new pcl::PointCloud<pcl::PointXYZ>);
+  pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_boundary (new pcl::PointCloud<pcl::PointXYZ>);
 	normEst.setInputCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr(cloud)); 
 	normEst.setRadiusSearch(reforn); //设置法线估计的半径
 	normEst.compute(*normals); //将法线估计结果保存至normals
