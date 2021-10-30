@@ -27,8 +27,8 @@ link_directories( ${PCL_LIBRARY_DIRS})
 add_definitions(${PCL_DEFINITIONS})
 
 ## 添加jsoncpp依赖
-set(lib_DIR /usr/lib/x84_64-linux-gnu)
-link_directories(${lib_DIR})
+## set(lib_DIR /usr/lib/x84_64-linux-gnu)
+## link_directories(${lib_DIR})
 
 
 ## 添加eigen3依赖

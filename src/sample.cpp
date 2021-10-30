@@ -149,6 +149,10 @@ int main() {
     pcd_to_mat(boundaries_cloud_vec[0],
                 trans,&eb_config,
                 &eb_extract_features.boundary_points);
+
+    pcd_to_mat(planars_cloud_vec[0],
+                trans,&eb_config,
+                &eb_extract_features.palnar_pois);
     
     
     
@@ -189,7 +193,14 @@ int main() {
 
     eb_roof_t roof_ptr;
 
-    generate_roof(&eb_extract_features,&eb_config,&roof_ptr);
+    generate_basic_roof(&eb_extract_features,&eb_config,&roof_ptr);
+
+    #if 0
+    lidar_planar_to_image(cloud,eb_extract_features.eb_mats.roofs_lidar_image,
+                            trans,eb_config.transform_x,eb_config.transform_y);
+    mat_show("lidar_roof_image",eb_extract_features.eb_mats.roofs_lidar_image,MAT_SIZE);
+    #endif
+    generate_roofs(&eb_extract_features, &roof_ptr, &eb_config);
     
     
     

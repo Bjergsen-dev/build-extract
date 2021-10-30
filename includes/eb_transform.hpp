@@ -48,5 +48,7 @@ void getTrans_of_TiffFile(const char * file_path_name, double* trans);
 
 
 void pcd_to_mat(pcl::PointCloud<pcl::PointXYZ>::Ptr boundary_cloud,double *trans,eb_config_t *eb_config_ptr,eb_points_t  *boundary_pois);
-
+#if 0
+void lidar_planar_to_image(pcl::PointCloud<pcl::PointXYZ>::Ptr &cloud,cv::Mat &image,double *trans,double transform_x,double transform_y);
+#endif
 #endif

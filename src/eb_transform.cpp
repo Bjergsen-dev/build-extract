@@ -1,4 +1,5 @@
 #include "eb_transform.hpp"
+#include "opencv2/opencv.hpp"
 //get trans of tiff file
 /*
  @prama: const char * file_path_name -- file path to load the tif
@@ -120,3 +121,21 @@ void pcd_to_mat(pcl::PointCloud<pcl::PointXYZ>::Ptr boundary_cloud,double *trans
     
     
 }
+
+#if 0
+void lidar_planar_to_image(pcl::PointCloud<pcl::PointXYZ>::Ptr &cloud,cv::Mat &image,double *trans,double transform_x,double transform_y)
+{
+  for(int i = 0; i < cloud->points.size(); i++)
+  {
+    float dx = get_row_column_frm_geoX_geoY(trans,cloud->points[i].x + transform_x ,cloud->points[i].y + transform_y,1);
+    float dy = get_row_column_frm_geoX_geoY(trans,cloud->points[i].x + transform_x,cloud->points[i].y + transform_y,2);
+
+    cv::circle(image,
+                cv::Point(dx,dy),
+                1,
+                cv::Scalar(0),
+                1,
+                CV_AA);
+  }
+}
+#endif

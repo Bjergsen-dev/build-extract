@@ -71,10 +71,14 @@ typedef struct eb_mats
     cv::Mat adsorb_update_image;
     cv::Mat simplify_lines_image;
     cv::Mat reset_lines_image;
+    cv::Mat close_lines_image;
+    cv::Mat roofs_image;
+    cv::Mat roofs_lidar_image;
 }eb_mats_t;
 
 typedef struct eb_features
 {
+    eb_points_t palnar_pois;
     eb_points_t boundary_points;
     eb_points_t delau_boundary_pois;
     eb_ins_points_t insert_pois;
