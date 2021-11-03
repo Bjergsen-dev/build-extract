@@ -155,34 +155,34 @@ int estimateBorders(std::vector<PointCloud<PointXYZ>::Ptr> &planars_cloud_vec,st
 
 int region_grow (pcl::PointCloud<pcl::PointXYZ>::Ptr &cloud,std::vector<PointCloud<PointXYZ>::Ptr> &res_vec)
 {
+  EB_LOG("[PCL::INFO] input cloud points num is %ld\n",(*cloud).size());
   pcl::search::Search<pcl::PointXYZ>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZ>);
   pcl::PointCloud <pcl::Normal>::Ptr normals (new pcl::PointCloud <pcl::Normal>);
   pcl::NormalEstimation<pcl::PointXYZ, pcl::Normal> normal_estimator;
   normal_estimator.setSearchMethod (tree);
   normal_estimator.setInputCloud (cloud);
-  normal_estimator.setKSearch (50);
+  normal_estimator.setKSearch (10);
   normal_estimator.compute (*normals);
 
-  pcl::IndicesPtr indices (new std::vector <int>);
-  pcl::PassThrough<pcl::PointXYZ> pass;
-  pass.setInputCloud (cloud);
-  pass.setFilterFieldName ("z");
-  pass.setFilterLimits (0.0, 1.0);
-  pass.filter (*indices);
+  // pcl::IndicesPtr indices (new std::vector <int>);
+  // pcl::PassThrough<pcl::PointXYZ> pass;
+  // pass.setInputCloud (cloud);
+  // pass.setFilterFieldName ("z");
+  // pass.setFilterLimits (0.0, 1.0);
+  // pass.filter (*indices);
 
   pcl::RegionGrowing<pcl::PointXYZ, pcl::Normal> reg;
-  reg.setMinClusterSize (50);
+  reg.setMinClusterSize (20);
   reg.setMaxClusterSize (100000);
   reg.setSearchMethod (tree);
-  reg.setNumberOfNeighbours (30);
+  reg.setNumberOfNeighbours (10);
   reg.setInputCloud (cloud);
   reg.setInputNormals (normals);
   reg.setSmoothnessThreshold (10.0 / 180.0 * M_PI);
-  reg.setCurvatureThreshold (5.0);
+  //reg.setCurvatureThreshold (5.0);
 
   std::vector <pcl::PointIndices> clusters;
   reg.extract (clusters);
-
   for(pcl::PointIndices inliers : clusters){
       
         pcl::PointIndices::Ptr inliers_ptr(new pcl::PointIndices(inliers));
@@ -191,16 +191,27 @@ int region_grow (pcl::PointCloud<pcl::PointXYZ>::Ptr &cloud,std::vector<PointClo
         extract.setIndices(inliers_ptr);
         pcl::PointCloud<pcl::PointXYZ>::Ptr output(new pcl::PointCloud<pcl::PointXYZ>);
         extract.filter(*output);//提取对于索引的点云 内点
-        
-        res_vec.push_back(output);
-        std::cout<<"planar_points: "<<output->points.size()<<std::endl;
 
+        res_vec.push_back(output);
+       // std::cout<<"planar_points: "<<output->points.size()<<std::endl;
     
 }
 
-  std:cout<<"groof planes num is(after region grow seg) "<<res_vec.size()<<endl;
+  EB_LOG("[PCL::INFO] groof planes num is(after region grow seg) %ld\n",res_vec.size());
 
   return (0);
+}
+
+
+void get_min_max_z(double *res,const pcl::PointCloud<pcl::PointXYZ>::ConstPtr &cloud)
+{
+  pcl::PointXYZ min;
+  pcl::PointXYZ max;
+  pcl::getMinMax3D(*cloud,min,max);
+  
+  res[0] = min.z;
+  res[1] = max.z;
+  EB_LOG("[PCL::INFO] min z is %lf, max z is %lf\n",res[0],res[1]);
 }
 
 

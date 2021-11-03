@@ -16,6 +16,7 @@ typedef struct file_config
 typedef struct eb_config
 {
     file_config_t file_config;
+    double trans[6];
 
     double canny_thd_1;
     double canny_thd_2;
@@ -47,6 +48,8 @@ typedef struct eb_config
     double min_adsorb_dis;
 
     double min_direct_trd;
+
+    double ground_z;
 
 
 

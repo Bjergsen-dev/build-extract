@@ -58,17 +58,11 @@ float get_row_column_frm_geoX_geoY(double *trans,double geoX, double geoY,int ty
  @prama: int type -- decide the return type 2--geo_X other--geo_Y
  return : the spacial XY for input row or column
  */
-float get_geoX_geoY_frm_row_column(double*trans, double x,double y,int type){
+void get_geoX_geoY_frm_row_column(double*trans, double x,double y,double *geo_X, double *geo_Y){
     
-    float geo_X = trans[0] + (x+0.5) * trans[1] + (y+0.5) * trans[2];
-    float geo_Y = trans[3] + (x+0.5) * trans[4] + (y+0.5) * trans[5];
-    
-     if(type == 2){
-        
-        return geo_X;
-    }
-    
-    return geo_Y;
+     *geo_X = trans[0] + (x+0.5) * trans[1] + (y+0.5) * trans[2];
+     *geo_Y = trans[3] + (x+0.5) * trans[4] + (y+0.5) * trans[5];
+
 }
 
 //get the elevation of raster tif in paticular row_column

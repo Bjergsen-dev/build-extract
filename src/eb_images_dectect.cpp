@@ -28,6 +28,13 @@ void mat_show(const char* name , Mat &mat, int size){
     waitKey(0);
 }
 
+
+void rotate(cv::Mat &src, cv::Mat &dst,double angle,cv::Point2f center)
+{
+    cv::Mat M = cv::getRotationMatrix2D(center,angle,1);
+    cv::warpAffine(src,dst,M,cv::Size(src.cols,src.rows));
+}
+
 //find the boundaries in input mat with canny methods
 /*
 @prama: Mat &img -- input mat

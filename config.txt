@@ -12,7 +12,7 @@ hough_thd_2: 0.01745329
 hough_thd_3: 30
 hough_thd_4: 10.
 hough_thd_5: 10
-pcl_filter_z1: 84
+pcl_filter_z1: 84.5
 pcl_filter_z2: 93
 pcl_estimate_thd: 1.0
 transform_x: 493213.86
@@ -23,3 +23,4 @@ buffer_filter_f: 0.5
 min_adsorb_num: 3
 min_adsorb_dis: 15.0
 min_direct_trd: 0.98480775301221
+ground_z: 280.0

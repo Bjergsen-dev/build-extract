@@ -30,6 +30,7 @@
 #include <pcl/filters/statistical_outlier_removal.h>
 #include <pcl/filters/passthrough.h>
 #include <pcl/segmentation/region_growing.h>
+#include <pcl/common/common.h>
 #include "eb_config.hpp"
 using namespace pcl;
 
@@ -60,4 +61,7 @@ int estimateBorders(std::vector<PointCloud<PointXYZ>::Ptr> &planars_cloud_vec,st
  */
 float computeCloudResolution(const pcl::PointCloud<pcl::PointXYZ>::ConstPtr &cloud, int k);
 
+void get_min_max_z(double *res,const pcl::PointCloud<pcl::PointXYZ>::ConstPtr &cloud);
+
+int region_grow (pcl::PointCloud<pcl::PointXYZ>::Ptr &cloud,std::vector<PointCloud<PointXYZ>::Ptr> &res_vec);
 #endif

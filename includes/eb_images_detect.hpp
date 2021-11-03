@@ -10,7 +10,7 @@
 #include "eb_config.hpp"
 
 
-
+void rotate(cv::Mat &src, cv::Mat &dst,double angle,cv::Point2f center);
 
 //Mat show method 
 /*

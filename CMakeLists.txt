@@ -35,7 +35,8 @@ add_definitions(${PCL_DEFINITIONS})
 include_directories( "/usr/include/eigen3" )
 
 include_directories(includes) #添加头文件
-include_directories(includes/delaunay_context) #添加头文件
+include_directories(includes/delaunay_convex) #添加头文件
+include_directories(includes/convex_seg) #添加头文件
  
 FILE(GLOB_RECURSE CURRENT_INCLUDE includes/*.hpp)
 FILE(GLOB_RECURSE CURRENT_SOURCES src/*.cpp)     #aux_source_directory(src CURRENT_SOURCES)

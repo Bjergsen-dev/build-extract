@@ -8,6 +8,7 @@
 #include "eb_lidar_detect.hpp"
 #include "eb_transform.hpp"
 #include "eb_filter.hpp"
+#include "eb_rebuild.hpp"
 
 #if 0 
 float fangcha(vector<float> foot_dis_vec){
@@ -118,7 +119,14 @@ int main() {
         EB_LOG("[PCL::ERROR] Point cloud %s reading failed.\n",eb_config.file_config.lidar_path);
         return (-1);
     }
+
     filter_pcl_with_z(cloud,&eb_config);
+
+    double cloud_min_max_z[2];
+    get_min_max_z(cloud_min_max_z,cloud);
+    cloud_min_max_z[0] += eb_config.transform_z;
+    cloud_min_max_z[1] += eb_config.transform_z;
+
     std::vector<PointCloud<PointXYZ>::Ptr> planars_cloud_vec = {cloud} ;
     
     //visualization the planar pcd
@@ -136,22 +144,30 @@ int main() {
 #endif
     //pcl::io::savePCDFile(_output+"boundary_"+_name+".pcd",*(boundaries_cloud_vec[0]));
 
+    std::vector<PointCloud<PointXYZ>::Ptr> roof_cloud_vec;
+    region_grow(cloud,roof_cloud_vec);
+#ifdef EB_PCL_VISUAL
+    pcl::visualization::PCLVisualizer viewer2("roofs Viewer");
+    D3_view(viewer2,roof_cloud_vec,cloud);
+#endif
+
 #ifdef EB_PCL_VISUAL
    while (!viewer.wasStopped ())
   {
     viewer.spinOnce();
     viewer1.spinOnce();
+    viewer2.spinOnce();
   }
-#endif      
-    double trans[6];
+#endif    
+    //double trans[6];
     // get the location transform prameters in input dom
-    getTrans_of_TiffFile(eb_config.file_config.image_path,trans); 
+    getTrans_of_TiffFile(eb_config.file_config.image_path,eb_config.trans); 
     pcd_to_mat(boundaries_cloud_vec[0],
-                trans,&eb_config,
+                eb_config.trans,&eb_config,
                 &eb_extract_features.boundary_points);
 
     pcd_to_mat(planars_cloud_vec[0],
-                trans,&eb_config,
+                eb_config.trans,&eb_config,
                 &eb_extract_features.palnar_pois);
     
     
@@ -197,10 +213,13 @@ int main() {
 
     #if 0
     lidar_planar_to_image(cloud,eb_extract_features.eb_mats.roofs_lidar_image,
-                            trans,eb_config.transform_x,eb_config.transform_y);
+                            eb_config.trans,eb_config.transform_x,eb_config.transform_y);
     mat_show("lidar_roof_image",eb_extract_features.eb_mats.roofs_lidar_image,MAT_SIZE);
     #endif
-    generate_roofs(&eb_extract_features, &roof_ptr, &eb_config);
+    generate_roofs(&eb_extract_features, &roof_ptr, &eb_config,cloud_min_max_z);
+
+    roof_rebuild(&roof_ptr,&eb_config,eb_extract_features.eb_mats.roofs_lidar_image,cloud_min_max_z);
+    
     
     
     
