@@ -203,14 +203,14 @@ int region_grow (pcl::PointCloud<pcl::PointXYZ>::Ptr &cloud,std::vector<PointClo
 }
 
 
-void get_min_max_z(double *res,const pcl::PointCloud<pcl::PointXYZ>::ConstPtr &cloud)
+void get_min_max_z(double *res,const pcl::PointCloud<pcl::PointXYZ>::ConstPtr &cloud,eb_config_t *eb_config_ptr)
 {
   pcl::PointXYZ min;
   pcl::PointXYZ max;
   pcl::getMinMax3D(*cloud,min,max);
   
-  res[0] = min.z;
-  res[1] = max.z;
+  res[0] = min.z + eb_config_ptr->transform_z;
+  res[1] = max.z + eb_config_ptr->transform_z;
   EB_LOG("[PCL::INFO] min z is %lf, max z is %lf\n",res[0],res[1]);
 }
 

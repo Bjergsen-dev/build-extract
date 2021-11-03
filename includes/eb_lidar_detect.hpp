@@ -61,7 +61,7 @@ int estimateBorders(std::vector<PointCloud<PointXYZ>::Ptr> &planars_cloud_vec,st
  */
 float computeCloudResolution(const pcl::PointCloud<pcl::PointXYZ>::ConstPtr &cloud, int k);
 
-void get_min_max_z(double *res,const pcl::PointCloud<pcl::PointXYZ>::ConstPtr &cloud);
+void get_min_max_z(double *res,const pcl::PointCloud<pcl::PointXYZ>::ConstPtr &cloud,eb_config_t *eb_config_ptr);
 
 int region_grow (pcl::PointCloud<pcl::PointXYZ>::Ptr &cloud,std::vector<PointCloud<PointXYZ>::Ptr> &res_vec);
 #endif

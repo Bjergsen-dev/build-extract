@@ -51,6 +51,8 @@ typedef struct eb_config
 
     double ground_z;
 
+    int rebud_density_x;
+    int rebud_density_y;
 
 
     

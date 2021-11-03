@@ -123,9 +123,7 @@ int main() {
     filter_pcl_with_z(cloud,&eb_config);
 
     double cloud_min_max_z[2];
-    get_min_max_z(cloud_min_max_z,cloud);
-    cloud_min_max_z[0] += eb_config.transform_z;
-    cloud_min_max_z[1] += eb_config.transform_z;
+    get_min_max_z(cloud_min_max_z,cloud,&eb_config);
 
     std::vector<PointCloud<PointXYZ>::Ptr> planars_cloud_vec = {cloud} ;
     
@@ -216,11 +214,11 @@ int main() {
                             eb_config.trans,eb_config.transform_x,eb_config.transform_y);
     mat_show("lidar_roof_image",eb_extract_features.eb_mats.roofs_lidar_image,MAT_SIZE);
     #endif
-    generate_roofs(&eb_extract_features, &roof_ptr, &eb_config,cloud_min_max_z);
+    generate_roofs(&eb_extract_features, &roof_ptr, &eb_config);
 
-    roof_rebuild(&roof_ptr,&eb_config,eb_extract_features.eb_mats.roofs_lidar_image,cloud_min_max_z);
+    vector_roof_rebuild(&roof_ptr,&eb_config,eb_extract_features.eb_mats.roofs_lidar_image);
     
-    
+    grid_roof_rebuild(&roof_ptr,&eb_config, eb_extract_features.eb_mats.roofs_lidar_image);
     
     
     

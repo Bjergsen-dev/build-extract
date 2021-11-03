@@ -1125,7 +1125,7 @@ static void gerate_inside_roof_lns(eb_roof_t *roof_ptr,
     }
 }
 
-static void buble_sort(std::vector<double> &dis_vec,std::vector<uchar> &val_vec)
+static void buble_sort(std::vector<double> &dis_vec,std::vector<double> &val_vec)
 {
     for(int i = 0; i < dis_vec.size()-1; i++)
     {
@@ -1134,7 +1134,7 @@ static void buble_sort(std::vector<double> &dis_vec,std::vector<uchar> &val_vec)
             if(dis_vec[j] > dis_vec[j+1])
             {
                 double tmp;
-                uchar tmp_u;
+                double tmp_u;
                 tmp = dis_vec[j];
                 tmp_u = val_vec[j];
                 dis_vec[j] = dis_vec[j+1];
@@ -1146,7 +1146,7 @@ static void buble_sort(std::vector<double> &dis_vec,std::vector<uchar> &val_vec)
     }
 }
 
-static double lidar_interpola(cv::Mat &image,cv::Mat &image_copy,int col , int row, eb_roof_t *roof_ptr)
+static double lidar_interpola(cv::Mat &image_copy,int col , int row, eb_roof_t *roof_ptr)
 {
     int count = 0;
     int step = 1;
@@ -1154,7 +1154,7 @@ static double lidar_interpola(cv::Mat &image,cv::Mat &image_copy,int col , int r
     while(1)
     {
         std::vector<double> dis_vec;
-        std::vector<uchar> val_vec;
+        std::vector<double> val_vec;
         for(int i = row - step; i <= row+step; i++)
         {
             for(int j = col - step; j <= col+step; j++)
@@ -1162,10 +1162,10 @@ static double lidar_interpola(cv::Mat &image,cv::Mat &image_copy,int col , int r
                 eb_point_t tmp_poi;
                 tmp_poi.dx = j;
                 tmp_poi.dy = i;
-                if(image_copy.at<uchar>(i,j) != 255 && poi_inside_poly(&roof_ptr->basic_poly,&tmp_poi))
+                if(image_copy.at<double>(i,j) != 0. && poi_inside_poly(&roof_ptr->basic_poly,&tmp_poi))
                 {
                     
-                    val_vec.push_back(image_copy.at<uchar>(i,j));
+                    val_vec.push_back(image_copy.at<double>(i,j));
                     dis_vec.push_back(sqrt(pow((i-row),2)+pow(j-col,2)));
                     count++;
                 }
@@ -1179,6 +1179,7 @@ static double lidar_interpola(cv::Mat &image,cv::Mat &image_copy,int col , int r
             double k = 0;
             for(int j = 0; j < 4; j++)
             {
+
                 double dis = dis_vec[j];
                 k += 1/dis;
             }
@@ -1190,7 +1191,16 @@ static double lidar_interpola(cv::Mat &image,cv::Mat &image_copy,int col , int r
                 res += 1/dis_vec[i] * k * val_vec[i];
             }
 
+            #if 0
+            EB_LOG("[EB_DEBUG::] val is %lf %lf %lf %lf  interpola res is %lf\n",
+                        val_vec[0],
+                        val_vec[1],
+                        val_vec[2],
+                        val_vec[3],
+                        res);
+            #endif
             return res;
+            
         }
         else
         {
@@ -1202,33 +1212,24 @@ static double lidar_interpola(cv::Mat &image,cv::Mat &image_copy,int col , int r
     return 0.;
 }
 
-static void generate_lidar_roof(eb_features_t *eb_featur_ptr,eb_roof_t *roof_ptr,eb_config_t *eb_config_ptr,double *cloud_z)
+static void generate_lidar_roof(eb_features_t *eb_featur_ptr,eb_roof_t *roof_ptr,eb_config_t *eb_config_ptr)
 {
-    double min_height = INT16_MAX;
-    double max_height = 0.;
-    #if 0
-    for(int i = 0; i < eb_featur_ptr->palnar_pois.point_size; i++)
-    {
-        min_height = EB_MIN(min_height,eb_featur_ptr->palnar_pois.points[i].point_z);
-        max_height = EB_MAX(max_height,eb_featur_ptr->palnar_pois.points[i].point_z);
-    }
-    #endif
-
-    min_height = cloud_z[0];
-    max_height = cloud_z[1];
-
 
     for(int i = 0; i < eb_featur_ptr->palnar_pois.point_size; i++)
     {
         int dx = eb_featur_ptr->palnar_pois.points[i].dx + 0.5;
         int dy = eb_featur_ptr->palnar_pois.points[i].dy + 0.5;
-        eb_featur_ptr->eb_mats.roofs_lidar_image.at<uchar>(dy,dx) = 
-            (MAX_PIXEL_VAL-MIN_PIXEL_VAL)*((eb_featur_ptr->palnar_pois.points[i].point_z - min_height)/
-            (max_height - min_height)) + MIN_PIXEL_VAL;
+        eb_featur_ptr->eb_mats.roofs_lidar_image.at<double>(dy,dx) = 
+                        eb_featur_ptr->palnar_pois.points[i].point_z;
+        #if 0
+        EB_LOG("[EB_DEBUG::] planar poi %d z is %lf\n",i,eb_featur_ptr->palnar_pois.points[i].point_z);
+        #endif
+            
     }
     cv::Mat image_copy;
-    eb_featur_ptr->eb_mats.roofs_lidar_image.copyTo(image_copy);
-    //mat_show("lidar_roof",eb_featur_ptr->eb_mats.roofs_lidar_image,MAT_SIZE);
+    image_copy = eb_featur_ptr->eb_mats.roofs_lidar_image.clone();
+    mat_show("lidar_roof_origin",image_copy,MAT_SIZE);
+    cv::imwrite("../images/lidar_roof_0.tif",image_copy);
     #if 1
     for(int i = 0; i < eb_featur_ptr->eb_mats.roofs_lidar_image.rows;i++)
     {
@@ -1239,11 +1240,10 @@ static void generate_lidar_roof(eb_features_t *eb_featur_ptr,eb_roof_t *roof_ptr
             tmp_poi.dy = i;
             if(poi_inside_poly(&roof_ptr->basic_poly,&tmp_poi))
             {
-                if(eb_featur_ptr->eb_mats.roofs_lidar_image.at<uchar>(i,j) == 255)
+                if(eb_featur_ptr->eb_mats.roofs_lidar_image.at<double>(i,j) == 0.)
                 {
-                    eb_featur_ptr->eb_mats.roofs_lidar_image.at<uchar>(i,j)=
-                    lidar_interpola(eb_featur_ptr->eb_mats.roofs_lidar_image,
-                                        image_copy,
+                    eb_featur_ptr->eb_mats.roofs_lidar_image.at<double>(i,j)=
+                    lidar_interpola(image_copy,
                                         j,
                                         i,
                                         roof_ptr);
@@ -1251,14 +1251,14 @@ static void generate_lidar_roof(eb_features_t *eb_featur_ptr,eb_roof_t *roof_ptr
             }
             else
             {
-                eb_featur_ptr->eb_mats.roofs_lidar_image.at<uchar>(i,j) = 255;
+                eb_featur_ptr->eb_mats.roofs_lidar_image.at<double>(i,j) = 0.;
             }
         }
     }
     #endif
 }
 
-void  generate_roofs(eb_features_t *eb_featur_ptr, eb_roof_t *roof_ptr, eb_config_t *eb_config_ptr,double *cloud_z)
+void  generate_roofs(eb_features_t *eb_featur_ptr, eb_roof_t *roof_ptr, eb_config_t *eb_config_ptr)
 {
     #if 1
     gerate_inside_roof_lns(roof_ptr,
@@ -1269,20 +1269,20 @@ void  generate_roofs(eb_features_t *eb_featur_ptr, eb_roof_t *roof_ptr, eb_confi
     #endif
 
     #if 1
-    generate_lidar_roof(eb_featur_ptr,roof_ptr,eb_config_ptr,cloud_z);
+    generate_lidar_roof(eb_featur_ptr,roof_ptr,eb_config_ptr);
     mat_show("lidar_roof",eb_featur_ptr->eb_mats.roofs_lidar_image,MAT_SIZE);
     #ifdef EB_DEBUG
-    cv::imwrite("../images/lidar_roof.bmp",eb_featur_ptr->eb_mats.roofs_lidar_image);
+    cv::imwrite("../images/lidar_roof.tif",eb_featur_ptr->eb_mats.roofs_lidar_image);
     
     cv::Mat dst;
     double angle = acos(fabs(roof_ptr->roof_direct[1])) * 180 / M_PI;
-    EB_LOG("[EB_DEBUG]::abgle rotate is %lf\n",angle);
+    EB_LOG("[EB_DEBUG]::angle rotate is %lf\n",angle);
     rotate(eb_featur_ptr->eb_mats.roofs_lidar_image,dst,
             -angle,    
             cv::Point2f(eb_featur_ptr->eb_mats.roofs_lidar_image.cols/2,
                         eb_featur_ptr->eb_mats.roofs_lidar_image.rows/2));
     mat_show("rotate_lidar",dst,MAT_SIZE);
-    cv::imwrite("../images/lidar_roof_rotate.bmp",dst);
+    cv::imwrite("../images/lidar_roof_rotate.tif",dst);
     #endif
     #endif
 

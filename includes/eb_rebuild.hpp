@@ -12,6 +12,8 @@ typedef struct rebuilt_poi
 
 }rebuild_poi_t;
 
-void roof_rebuild(eb_roof_t *roof,eb_config_t *eb_config_ptr, cv::Mat &roof_lidar_image,double *cloud_z);
+void vector_roof_rebuild(eb_roof_t *roof,eb_config_t *eb_config_ptr, cv::Mat &roof_lidar_image);
+
+void grid_roof_rebuild(eb_roof_t *roof,eb_config_t *eb_config_ptr, cv::Mat &roof_lidar_image);
 
 #endif

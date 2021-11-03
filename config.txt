@@ -3,7 +3,7 @@ image_path: /home/jaxzhong/share_folder/2021_data/Area1/images/mando_Area1_build
 lidar_path: /home/jaxzhong/share_folder/2021_data/Area1/point_clouds/lidar_Area1_build_12_1.pcd
 oesm_path: ../oesm/oesm.tif
 dem_path: ../dem/324_DEM.tif
-output_path: ../results/Area1_result
+output_path: /home/jaxzhong/share_folder/2021_data/Area1/result/build_12
 
 canny_thd_1: 30
 canny_thd_2: 150
@@ -24,3 +24,5 @@ min_adsorb_num: 3
 min_adsorb_dis: 15.0
 min_direct_trd: 0.98480775301221
 ground_z: 280.0
+rebud_density_x: 3
+rebud_density_y: 3
