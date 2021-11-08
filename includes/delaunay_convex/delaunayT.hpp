@@ -45,6 +45,7 @@ public:
         std::vector<A_Point2d> push_to_contours2_right;
         int is_first_edge = 0;
         while(!edge_list.empty()) {
+            EB_LOG("[EB_DEBUG::] delaunay left pois num is %ld\n",edge_list.size());
             if(iter == edge_list.end()) {
                 iter = edge_list.begin();
             }

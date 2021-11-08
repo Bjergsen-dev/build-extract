@@ -597,6 +597,7 @@ static void pre_generate_roof(eb_features_t *eb_features_ptr,std::vector<eb_fina
 
     for(int i =0; i < boudary_pois->point_size; i++)
     {
+
         #ifdef EB_DEBUG
         EB_LOG("[EB_DEBUG::] origin point %d -->line %d --%d\n",
                 i,boudary_pois->points[i].adsorb_line_idx,boudary_pois->points[i].is_delaunay);
@@ -633,8 +634,12 @@ static void pre_generate_roof(eb_features_t *eb_features_ptr,std::vector<eb_fina
         #endif
         if(tmp_pois[i].is_adsorbed ==  0)
         {
-            un_adsorb_num = 1;
+            un_adsorb_num += 1;
             continue;
+        }
+        if(i==37)
+        {
+            printf("ass\n");
         }
 
         if(last_adsorb_idx == -2)
@@ -650,12 +655,20 @@ static void pre_generate_roof(eb_features_t *eb_features_ptr,std::vector<eb_fina
         {
             tmp_line.point_end = tmp_pois[i-1 - un_adsorb_num];
             tmp_line.point_end.delau_pois_idx = i-1 - un_adsorb_num;
-            tmp_lines_vec.push_back(tmp_line);
+            if(tmp_line.point_beg.dx != tmp_line.point_end.dx || 
+                tmp_line.point_beg.dy != tmp_line.point_end.dy)
+                {
+                    tmp_lines_vec.push_back(tmp_line);
+                }     
             tmp_line.point_beg = tmp_pois[i];
             tmp_line.point_beg.delau_pois_idx = i;
             last_adsorb_idx = tmp_pois[i].adsorb_line_idx;
+            un_adsorb_num = 0;
+            continue;
         }
 
+        tmp_line.point_end = tmp_pois[i];
+        tmp_line.point_end.delau_pois_idx = i;
         un_adsorb_num = 0;
 
     }
@@ -664,11 +677,26 @@ static void pre_generate_roof(eb_features_t *eb_features_ptr,std::vector<eb_fina
     {
         tmp_lines_vec[0].point_beg = tmp_line.point_beg;
     }
+    else
+    {
+        if(tmp_line.point_beg.delau_pois_idx < tmp_line.point_end.delau_pois_idx)
+        {
+            tmp_lines_vec.push_back(tmp_line);
+        }
+        
+    }
 
     update_corner_pois(tmp_lines_vec,&eb_features_ptr->insert_pois);
 
     for(int i = 0; i < tmp_lines_vec.size();i++)
     {
+        int next = i == tmp_lines_vec.size()-1? 0:i+1;
+
+        if(tmp_lines_vec[i].point_beg.adsorb_line_idx == tmp_lines_vec[next].point_beg.adsorb_line_idx)
+        {
+            tmp_lines_vec[i].point_end = tmp_lines_vec[next].point_end;
+            tmp_lines_vec.erase(tmp_lines_vec.begin()+next);
+        }
         int rgb_r = rand()%255;
         int rgb_g = rand()%255;
         int rgb_b = rand()%255;
@@ -821,6 +849,8 @@ static void close_roof_lines(std::vector<eb_final_line_t> &lines_vec,double dire
     for(int i =0; i<lines_vec.size(); i++)
     {
         int next = i==lines_vec.size()-1?0:i+1;
+        
+        
         double cc = pow(lines_vec[i].direct[0] - lines_vec[next].direct[0], 2) + 
                     pow(lines_vec[i].direct[1] - lines_vec[next].direct[1], 2);
         double cos = (2-cc)/2;
@@ -840,7 +870,7 @@ static void close_roof_lines(std::vector<eb_final_line_t> &lines_vec,double dire
                     double n = lines_vec[next].direct[1];
                     
                     double y = b*n*n + m*m*d + m*n*(a-c);
-                    double x = m/n * (y-d) + c;
+                    double x = m/(n+MIN_DOUBLE) * (y-d) + c;
                     #ifdef EB_DEBUG
                     cv::circle(eb_feature_ptr->eb_mats.reset_lines_image,
                                 cv::Point(x,y),
@@ -877,10 +907,10 @@ static void close_roof_lines(std::vector<eb_final_line_t> &lines_vec,double dire
                     double n2 = lines_vec[next].direct[1];
                     
                     double y1 = b*n1*n1 + m1*m1*d1+ m1*n1*(a-c1);
-                    double x1 = m1/n1 * (y1-d1) + c1;
+                    double x1 = m1/(n1+MIN_DOUBLE) * (y1-d1) + c1;
 
                     double y2 = b*n2*n2 + m2*m2*d2+ m2*n2*(a-c2);
-                    double x2 = m2/n2 * (y2-d2) + c2;
+                    double x2 = m2/(n2+MIN_DOUBLE) * (y2-d2) + c2;
                     #ifdef EB_DEBUG
                     cv::circle(eb_feature_ptr->eb_mats.reset_lines_image,
                                 cv::Point(x1,y1),
@@ -922,7 +952,7 @@ static void close_roof_lines(std::vector<eb_final_line_t> &lines_vec,double dire
                     
                     double y = b*n*n + m*m*d + m*n*(a-c);
 
-                    double x = m/n * (y-d) + c;
+                    double x = m/(n+MIN_DOUBLE) * (y-d) + c;
                     #ifdef EB_DEBUG
                     cv::circle(eb_feature_ptr->eb_mats.reset_lines_image,
                                 cv::Point(x,y),
@@ -960,8 +990,10 @@ static void close_roof_lines(std::vector<eb_final_line_t> &lines_vec,double dire
             double m2 = lines_vec[next].direct[0];
             double n2 = lines_vec[next].direct[1];
 
-            double y = ((m1/n1)*b - (m2/n2)*d + c - a)/(m1/n1 - m2/n2);
-            double x = (y-b)*(m1/n1)+a;
+            double y = ((m1/(n1+MIN_DOUBLE))*b - 
+                            (m2/(n2+MIN_DOUBLE))*d + c - a)/(m1/(n1+MIN_DOUBLE) - 
+                                    m2/(n2+MIN_DOUBLE));
+            double x = (y-b)*(m1/(n1+MIN_DOUBLE))+a;
 
             #ifdef EB_DEBUG
             cv::circle(eb_feature_ptr->eb_mats.reset_lines_image,
@@ -1229,7 +1261,9 @@ static void generate_lidar_roof(eb_features_t *eb_featur_ptr,eb_roof_t *roof_ptr
     cv::Mat image_copy;
     image_copy = eb_featur_ptr->eb_mats.roofs_lidar_image.clone();
     mat_show("lidar_roof_origin",image_copy,MAT_SIZE);
+    #if 0
     cv::imwrite("../images/lidar_roof_0.tif",image_copy);
+    #endif
     #if 1
     for(int i = 0; i < eb_featur_ptr->eb_mats.roofs_lidar_image.rows;i++)
     {
@@ -1272,17 +1306,30 @@ void  generate_roofs(eb_features_t *eb_featur_ptr, eb_roof_t *roof_ptr, eb_confi
     generate_lidar_roof(eb_featur_ptr,roof_ptr,eb_config_ptr);
     mat_show("lidar_roof",eb_featur_ptr->eb_mats.roofs_lidar_image,MAT_SIZE);
     #ifdef EB_DEBUG
+    #if 0
     cv::imwrite("../images/lidar_roof.tif",eb_featur_ptr->eb_mats.roofs_lidar_image);
+    #endif
     
     cv::Mat dst;
     double angle = acos(fabs(roof_ptr->roof_direct[1])) * 180 / M_PI;
+    if(angle < -45)
+    {
+        angle = -90 - angle; 
+    }
+    else if(angle > 45)
+    {
+        angle = 90 -angle;
+    }
+    angle = roof_ptr->roof_direct[1] > 0? angle : -angle;
     EB_LOG("[EB_DEBUG]::angle rotate is %lf\n",angle);
     rotate(eb_featur_ptr->eb_mats.roofs_lidar_image,dst,
-            -angle,    
+            angle,    
             cv::Point2f(eb_featur_ptr->eb_mats.roofs_lidar_image.cols/2,
                         eb_featur_ptr->eb_mats.roofs_lidar_image.rows/2));
     mat_show("rotate_lidar",dst,MAT_SIZE);
+    #if 0
     cv::imwrite("../images/lidar_roof_rotate.tif",dst);
+    #endif
     #endif
     #endif
 

@@ -1,4 +1,5 @@
 task: build_extract
+name: build_12
 image_path: /home/jaxzhong/share_folder/2021_data/Area1/images/mando_Area1_build_12.tif
 lidar_path: /home/jaxzhong/share_folder/2021_data/Area1/point_clouds/lidar_Area1_build_12_1.pcd
 oesm_path: ../oesm/oesm.tif
@@ -14,7 +15,7 @@ hough_thd_4: 10.
 hough_thd_5: 10
 pcl_filter_z1: 84.5
 pcl_filter_z2: 93
-pcl_estimate_thd: 1.0
+pcl_estimate_thd: 0.5
 transform_x: 493213.86
 transform_y: 5419721.72
 transform_z: 200
