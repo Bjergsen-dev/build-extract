@@ -6,6 +6,7 @@
 typedef struct file_config
 {
     char name[256];
+    char origin_path[256];
     char image_path[256];
     char lidar_path[256];
     char oesm_path[256];

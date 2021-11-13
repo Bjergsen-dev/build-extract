@@ -132,7 +132,7 @@ static void adsorbsent_check(eb_line_t *line,int line_index, eb_points_t *points
         }
         else
         {
-            if(a > b && a > c)
+            if(a < b || a < c)
             {
                 continue ;
             }
@@ -637,10 +637,6 @@ static void pre_generate_roof(eb_features_t *eb_features_ptr,std::vector<eb_fina
             un_adsorb_num += 1;
             continue;
         }
-        if(i==37)
-        {
-            printf("ass\n");
-        }
 
         if(last_adsorb_idx == -2)
         {
@@ -783,10 +779,25 @@ static void reset_line_with_direc(eb_final_line_t *line,double *dirct,double thr
             d = -dirct[0];
         }
         #endif 
+        #if 0
         if(tmp_dire[0] >= 0)c=fabs(dirct[1]);
         if(tmp_dire[0] < 0)c=-fabs(dirct[1]);
         if(tmp_dire[1] >= 0)d=fabs(dirct[0]);
         if(tmp_dire[1] < 0)d=-fabs(dirct[0]);
+        #endif
+
+        if(fabs(tmp_dire[0]) >= fabs(tmp_dire[1]))
+        {
+            if(tmp_dire[0] >= 0)c=fabs(dirct[1]);
+            if(tmp_dire[0] < 0)c=-fabs(dirct[1]);
+            d = -tmp_dire[0]*dirct[0]/dirct[1];
+        }
+        else
+        {
+            if(tmp_dire[1] >= 0)d=fabs(dirct[0]);
+            if(tmp_dire[1] < 0)d=-fabs(dirct[0]);
+            c = -tmp_dire[1]*dirct[1]/dirct[0];
+        }
 
 
         e = length_of_line(line) * fabs(sin);
@@ -1047,7 +1058,7 @@ static void close_roof_lines(std::vector<eb_final_line_t> &lines_vec,double dire
                     cv::Point(roof->basic_poly.lines[i].point_end.dx,
                         roof->basic_poly.lines[i].point_end.dy),
                     cv::Scalar(0,255,0),
-                    2,
+                    1,
                     CV_AA);
     }
 }
@@ -1187,9 +1198,20 @@ static double lidar_interpola(cv::Mat &image_copy,int col , int row, eb_roof_t *
     {
         std::vector<double> dis_vec;
         std::vector<double> val_vec;
-        for(int i = row - step; i <= row+step; i++)
+
+        if((row - step < 0) && (row + step >= image_copy.rows) && 
+            (col - step<0) && (col + step>=image_copy.cols))
+            {
+                break;
+            }
+        int beg_i = row - step < 0? 0:row - step;
+        int end_i = row + step >= image_copy.rows? image_copy.rows-1:row + step;
+
+        int beg_j = col - step<0? 0:col - step;
+        int end_j = col + step>=image_copy.cols?image_copy.cols-1:col + step;
+        for(int i = beg_i; i <= end_i; i++)
         {
-            for(int j = col - step; j <= col+step; j++)
+            for(int j = beg_j; j <= end_j; j++)
             {
                 eb_point_t tmp_poi;
                 tmp_poi.dx = j;

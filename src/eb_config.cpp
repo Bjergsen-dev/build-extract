@@ -6,6 +6,7 @@ static void print_file_config(file_config_t * file_config_ptr)
 {
     EB_LOG("\n*******************EB FILE CONFIG*********************\n");
     EB_LOG("[EB::INFO] name: %s\n",file_config_ptr->name);
+    EB_LOG("[EB::INFO] origin_path: %s\n",file_config_ptr->origin_path);
     EB_LOG("[EB::INFO] image_path: %s\n",file_config_ptr->image_path);
     EB_LOG("[EB::INFO] lidar_path: %s\n",file_config_ptr->lidar_path);
     EB_LOG("[EB::INFO] oesm_path: %s\n",file_config_ptr->oesm_path);
@@ -59,6 +60,7 @@ void read_eb_config(eb_config_t * eb_config_ptr, const char * file_path)
 
     fscanf(fp,"task: build_extract\n");
     fscanf(fp,"name: %s\n",eb_config_ptr->file_config.name);
+    fscanf(fp,"origin_path: %s\n",eb_config_ptr->file_config.origin_path);
     fscanf(fp,"image_path: %s\n",eb_config_ptr->file_config.image_path);
     fscanf(fp,"lidar_path: %s\n",eb_config_ptr->file_config.lidar_path);
     fscanf(fp,"oesm_path: %s\n",eb_config_ptr->file_config.oesm_path);

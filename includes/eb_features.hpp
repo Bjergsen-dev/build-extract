@@ -61,6 +61,7 @@ typedef struct eb_mats
 {
     int image_width;
     int image_height;
+    cv::Mat origin_image;
     cv::Mat input_image;
     cv::Mat canny_image;
     cv::Mat hough_image;

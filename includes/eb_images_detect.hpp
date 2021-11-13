@@ -37,8 +37,7 @@ int canny_find_boundary(cv::Mat &img , cv::Mat &canny_out ,eb_config_t *eb_confi
  */
 int hough_find_lins(eb_lines_t *hough_lines,cv::Mat &canny_image, cv::Mat &hough_img,eb_config_t *eb_config_ptr);
 
-void init_mats(eb_mats_t *mats,const char *image_path);
-
+void init_mats(eb_mats_t *mats,const char *image_path,const char *origin_path);
 void set_buffer_mat(cv::Mat &boundary_mat,cv::Mat &buffer_mat ,eb_points_t *delau, eb_config_t *config_ptr);
 
 

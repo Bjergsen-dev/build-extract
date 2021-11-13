@@ -88,9 +88,10 @@ int hough_find_lins(eb_lines_t *hough_lines,cv::Mat &canny_image, cv::Mat &hough
 }
 
 
-void init_mats(eb_mats_t *mats,const char *image_path)
+void init_mats(eb_mats_t *mats,const char *image_path,const char *origin_path)
 {
 
+    mats->origin_image = cv::imread(origin_path);
     mats->input_image = cv::imread(image_path);
     mats->image_width = mats->input_image.cols;
     mats->image_height = mats->input_image.rows;
@@ -102,7 +103,10 @@ void init_mats(eb_mats_t *mats,const char *image_path)
     mats->adsorb_update_image = Mat(mats->image_height,mats->image_width,CV_8UC3,Scalar(255,255,255));
     mats->simplify_lines_image = Mat(mats->image_height,mats->image_width,CV_8UC3,Scalar(255,255,255));
     mats->reset_lines_image = Mat(mats->image_height,mats->image_width,CV_8UC3,Scalar(255,255,255));
+    #if 0
     mats->close_lines_image = Mat(mats->image_height,mats->image_width,CV_8UC3,Scalar(255,255,255));
+    #endif
+    mats->close_lines_image = mats->origin_image.clone();
     mats->roofs_image = Mat(mats->image_height,mats->image_width,CV_8UC3,Scalar(255,255,255));
     mats->roofs_lidar_image = Mat(mats->image_height,mats->image_width,CV_64FC1,cv::Scalar(0.));
     

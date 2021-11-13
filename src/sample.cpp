@@ -63,7 +63,9 @@ int main() {
     static eb_config_t eb_config; 
     read_eb_config(&eb_config,"/home/jaxzhong/Projects/build_extract/config.txt");
     
-    init_mats(&eb_extract_features.eb_mats,eb_config.file_config.image_path);
+    init_mats(&eb_extract_features.eb_mats,
+                eb_config.file_config.image_path,
+                eb_config.file_config.origin_path);
     if(!eb_extract_features.eb_mats.input_image.empty())
     {
         EB_LOG("[CV::INFO] Image %s open success!\n",eb_config.file_config.image_path);
@@ -78,7 +80,7 @@ int main() {
     snprintf(jpg_path,strlen(eb_config.file_config.out_path)+1,eb_config.file_config.out_path);
     snprintf(jpg_path+strlen(jpg_path),strlen(eb_config.file_config.name)+6,"/%s.bmp",eb_config.file_config.name);
     EB_LOG("[EB_DEBUG::] bmp path is %s\n",jpg_path);
-    cv::imwrite(jpg_path,eb_extract_features.eb_mats.input_image);
+    cv::imwrite(jpg_path,eb_extract_features.eb_mats.origin_image);
     #endif 
     //canny find boundary and record in img_out
     canny_find_boundary(eb_extract_features.eb_mats.input_image,

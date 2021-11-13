@@ -4,7 +4,7 @@ project( 3D_rebuild )
 set(CMAKE_CXX_FLAGS "-std=c++11")
 
 #build type
-set(CMAKE_BUILD_TYPE "Debug")
+set(CMAKE_BUILD_TYPE "Release")
 
 
 # 添加GDAL依赖

@@ -1,10 +1,11 @@
 task: build_extract
-name: build_12
-image_path: /home/jaxzhong/share_folder/2021_data/Area1/images/mando_Area1_build_12.tif
-lidar_path: /home/jaxzhong/share_folder/2021_data/Area1/point_clouds/lidar_Area1_build_12_1.pcd
+name: build_1
+origin_path: /home/jaxzhong/share_folder/2021_data/Area2/images/Area2_build_1.tif
+image_path: /home/jaxzhong/share_folder/2021_data/Area2/mando_images/mando_Area2_build_1.tif
+lidar_path: /home/jaxzhong/share_folder/2021_data/Area2/point_clouds/lidar_Area2_build_1_1.pcd
 oesm_path: ../oesm/oesm.tif
 dem_path: ../dem/324_DEM.tif
-output_path: /home/jaxzhong/share_folder/2021_data/Area1/result/build_12
+output_path: /home/jaxzhong/share_folder/2021_data/Area2/result/build_1
 
 canny_thd_1: 30
 canny_thd_2: 150
@@ -13,11 +14,11 @@ hough_thd_2: 0.01745329
 hough_thd_3: 30
 hough_thd_4: 10.
 hough_thd_5: 10
-pcl_filter_z1: 84.5
-pcl_filter_z2: 93
-pcl_estimate_thd: 0.5
-transform_x: 493213.86
-transform_y: 5419721.72
+pcl_filter_z1: 63.5
+pcl_filter_z2: 68.5
+pcl_estimate_thd: 1.5
+transform_x: 491644.44
+transform_y: 5419357.33
 transform_z: 200
 buffer_matrix_size: 15
 buffer_filter_f: 0.5
