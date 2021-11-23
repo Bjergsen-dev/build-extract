@@ -790,13 +790,13 @@ static void reset_line_with_direc(eb_final_line_t *line,double *dirct,double thr
         {
             if(tmp_dire[0] >= 0)c=fabs(dirct[1]);
             if(tmp_dire[0] < 0)c=-fabs(dirct[1]);
-            d = -tmp_dire[0]*dirct[0]/dirct[1];
+            d = -c*dirct[0]/dirct[1];
         }
         else
         {
             if(tmp_dire[1] >= 0)d=fabs(dirct[0]);
             if(tmp_dire[1] < 0)d=-fabs(dirct[0]);
-            c = -tmp_dire[1]*dirct[1]/dirct[0];
+            c = -d*dirct[1]/dirct[0];
         }
 
 
@@ -883,7 +883,7 @@ static void close_roof_lines(std::vector<eb_final_line_t> &lines_vec,double dire
                     double y = b*n*n + m*m*d + m*n*(a-c);
                     double x = m/(n+MIN_DOUBLE) * (y-d) + c;
                     #ifdef EB_DEBUG
-                    cv::circle(eb_feature_ptr->eb_mats.reset_lines_image,
+                    cv::circle(eb_feature_ptr->eb_mats.refine_liens_image,
                                 cv::Point(x,y),
                                 2,
                                 cv::Scalar(255,0,0),
@@ -923,13 +923,13 @@ static void close_roof_lines(std::vector<eb_final_line_t> &lines_vec,double dire
                     double y2 = b*n2*n2 + m2*m2*d2+ m2*n2*(a-c2);
                     double x2 = m2/(n2+MIN_DOUBLE) * (y2-d2) + c2;
                     #ifdef EB_DEBUG
-                    cv::circle(eb_feature_ptr->eb_mats.reset_lines_image,
+                    cv::circle(eb_feature_ptr->eb_mats.refine_liens_image,
                                 cv::Point(x1,y1),
                                 2,
                                 cv::Scalar(0,255,0),
                                 2,
                                 CV_AA);
-                    cv::circle(eb_feature_ptr->eb_mats.reset_lines_image,
+                    cv::circle(eb_feature_ptr->eb_mats.refine_liens_image,
                                 cv::Point(x2,y2),
                                 2,
                                 cv::Scalar(0,255,0),
@@ -965,7 +965,7 @@ static void close_roof_lines(std::vector<eb_final_line_t> &lines_vec,double dire
 
                     double x = m/(n+MIN_DOUBLE) * (y-d) + c;
                     #ifdef EB_DEBUG
-                    cv::circle(eb_feature_ptr->eb_mats.reset_lines_image,
+                    cv::circle(eb_feature_ptr->eb_mats.refine_liens_image,
                                 cv::Point(x,y),
                                 2,
                                 cv::Scalar(0,0,255),
@@ -1007,7 +1007,7 @@ static void close_roof_lines(std::vector<eb_final_line_t> &lines_vec,double dire
             double x = (y-b)*(m1/(n1+MIN_DOUBLE))+a;
 
             #ifdef EB_DEBUG
-            cv::circle(eb_feature_ptr->eb_mats.reset_lines_image,
+            cv::circle(eb_feature_ptr->eb_mats.refine_liens_image,
                                 cv::Point(x,y),
                                 2,
                                 cv::Scalar(0,0,0),
@@ -1045,12 +1045,15 @@ static void close_roof_lines(std::vector<eb_final_line_t> &lines_vec,double dire
         roof->basic_poly.lines[i] = final_roof_vec[i];
         roof->basic_poly.lines[i].poly_index = i;
         #ifdef EB_DEBUG
-        EB_LOG("[EB_DEBUG::] final line %d-->delau_idx:%d %d direct:%lf %lf\n",
+        EB_LOG("[EB_DEBUG::] final line %d-->delau_idx:%d %d direct:%lf %lf g_x %lf g_y %lf g_z %lf\n",
                 i,
                 roof->basic_poly.lines[i].point_beg.delau_pois_idx,
                 roof->basic_poly.lines[i].point_end.delau_pois_idx,
                 roof->basic_poly.lines[i].direct[0],
-                roof->basic_poly.lines[i].direct[1]);
+                roof->basic_poly.lines[i].direct[1],
+                roof->basic_poly.lines[i].point_beg.point_x,
+                roof->basic_poly.lines[i].point_beg.point_y,
+                roof->basic_poly.lines[i].point_beg.point_z);
         #endif
         cv::line(eb_feature_ptr->eb_mats.close_lines_image,
                     cv::Point(roof->basic_poly.lines[i].point_beg.dx,
@@ -1060,10 +1063,112 @@ static void close_roof_lines(std::vector<eb_final_line_t> &lines_vec,double dire
                     cv::Scalar(0,255,0),
                     1,
                     CV_AA);
+        
+        cv::circle(eb_feature_ptr->eb_mats.close_lines_image,
+                    cv::Point(roof->basic_poly.lines[i].point_beg.dx,
+                        roof->basic_poly.lines[i].point_beg.dy),
+                    3,
+                    cv::Scalar(0,0,0),
+                    1,
+                    CV_AA);
     }
 }
 
 #endif
+
+static void refine_line_with_direc(eb_features_t *eb_feature_ptr,
+                                    std::vector<eb_final_line_t> &tmp_lines_vec,
+                                std::vector<eb_final_line_t> &refine_lines_vec,
+                                eb_config_t *eb_config_ptr,
+                                eb_roof_t *roof)
+{
+    eb_final_line_t refine_line;
+    bool new_line = 1;
+    EB_LOG("\n");
+    for(int i = 0; i < tmp_lines_vec.size(); i++)
+    {
+        if(new_line)refine_line.point_beg = tmp_lines_vec[i].point_beg;
+        int next = i == tmp_lines_vec.size()-1?0:i+1;
+        if(fabs(tmp_lines_vec[i].direct[0] - tmp_lines_vec[next].direct[0]) < MIN_DISPARITY &&
+            fabs(tmp_lines_vec[i].direct[1] - tmp_lines_vec[next].direct[1]) < MIN_DISPARITY)
+            {
+                float a = tmp_lines_vec[i].point_beg.dx;
+                float b = tmp_lines_vec[i].point_beg.dy;
+                float c = tmp_lines_vec[i].point_end.dx;
+                float d = tmp_lines_vec[i].point_end.dy;
+                float a1 = tmp_lines_vec[next].point_beg.dx;
+                float b1 = tmp_lines_vec[next].point_beg.dy;
+                float c1 = tmp_lines_vec[next].point_end.dx;
+                float d1 = tmp_lines_vec[next].point_end.dy;
+
+                float dis = 0.;
+                if(fabs(a-c) < MIN_DISPARITY)dis = fabs(a-a1);
+                else
+                {
+                    float C1 = b-(b-d)/(a-c) * a;
+                    float C2 = b1-(b1-d1)/(a1-c1) * a1;
+                    float A = (b-d)/(a-c);
+                    float B = -1.;
+                    dis = fabs(C1-C2)/sqrt(A*A+1);
+                }
+                if(dis < eb_config_ptr->min_adsorb_dis)
+                {   
+                    EB_LOG("[EB_DEBUG::] lines refine -->same dire and close %d\n",i);
+                    if(next == 0)
+                    {
+                        refine_lines_vec[0].point_beg = refine_line.point_beg;
+                        continue;
+                    }    
+                    refine_line.point_end = tmp_lines_vec[next].point_end;
+                    new_line = 0;
+                    continue;
+                }
+                else
+                {
+                    EB_LOG("[EB_DEBUG::] lines refine -->same dire and not close %d\n",i);
+                    refine_line.point_end = tmp_lines_vec[i].point_end;
+                    refine_lines_vec.push_back(refine_line);
+                    new_line = 1;
+                    continue;
+                }
+            }
+            else
+            {
+                EB_LOG("[EB_DEBUG::] lines refine -->diff dirct %d\n",i);
+                refine_line.point_end = tmp_lines_vec[i].point_end;
+                refine_lines_vec.push_back(refine_line);
+                new_line = 1;
+                continue;
+            }
+    }
+
+    EB_LOG("\n");
+    for(int i =0; i<refine_lines_vec.size(); i++)
+    {
+        double dir[2];
+        direction_of_line(&refine_lines_vec[i],dir);
+        refine_lines_vec[i].poly_index = i;
+        reset_line_with_direc(&refine_lines_vec[i],
+                                roof->roof_direct,eb_config_ptr->min_direct_trd);
+        EB_LOG("[EB_DEBUG::] refine line %d-->delau_idx : %d %d direct: %lf %lf\n",
+                    i,
+                    refine_lines_vec[i].point_beg.delau_pois_idx,
+                    refine_lines_vec[i].point_end.delau_pois_idx,
+                    refine_lines_vec[i].direct[0],
+                    refine_lines_vec[i].direct[1]);
+
+        int rgb_r = rand()%255;
+        int rgb_g = rand()%255;
+        int rgb_b = rand()%255;
+        
+        cv::line(eb_feature_ptr->eb_mats.refine_liens_image,
+                cv::Point(refine_lines_vec[i].point_beg.dx,refine_lines_vec[i].point_beg.dy),
+                cv::Point(refine_lines_vec[i].point_end.dx,refine_lines_vec[i].point_end.dy),
+                cv::Scalar(rgb_r,rgb_g,rgb_b),
+                5,
+                CV_AA);
+    }
+}
 
 void generate_basic_roof(eb_features_t *eb_features_ptr,eb_config_t *eb_config_ptr,eb_roof_t *roof_ptr)
 {
@@ -1085,35 +1190,40 @@ void generate_basic_roof(eb_features_t *eb_features_ptr,eb_config_t *eb_config_p
     }
 
     direction_of_line(tmp_line_ptr,roof_ptr->roof_direct);
-    EB_LOG("[EB::INFO] the main direction is : (%lf,%lf) \n",
+    EB_LOG("\n[EB::INFO] the main direction is : (%lf,%lf) \n",
             roof_ptr->roof_direct[0],roof_ptr->roof_direct[1]);
 
     for(int i = 0; i < tmp_lines_vec.size(); i++)
     {
         reset_line_with_direc(&tmp_lines_vec[i],roof_ptr->roof_direct,eb_config_ptr->min_direct_trd);
         #ifdef EB_DEBUG
-        EB_LOG("[EB_DEBUG::] line %d-->delau_idx : %d %d direct: %lf %lf\n",
+        EB_LOG("[EB_DEBUG::] reset line %d-->delau_idx : %d %d direct: %lf %lf\n",
                 i,
                 tmp_lines_vec[i].point_beg.delau_pois_idx,
                 tmp_lines_vec[i].point_end.delau_pois_idx,
                 tmp_lines_vec[i].direct[0],
                 tmp_lines_vec[i].direct[1]);
         #endif
+
         int rgb_r = rand()%255;
         int rgb_g = rand()%255;
         int rgb_b = rand()%255;
+        
         cv::line(eb_features_ptr->eb_mats.reset_lines_image,
                 cv::Point(tmp_lines_vec[i].point_beg.dx,tmp_lines_vec[i].point_beg.dy),
                 cv::Point(tmp_lines_vec[i].point_end.dx,tmp_lines_vec[i].point_end.dy),
                 cv::Scalar(rgb_r,rgb_g,rgb_b),
-                2,
+                5,
                 CV_AA);
     }
+    std::vector<eb_final_line_t> refine_lines_vec;
+    refine_line_with_direc(eb_features_ptr,tmp_lines_vec,refine_lines_vec,eb_config_ptr,roof_ptr);
 
     EB_LOG("\n[EB::INFO] reset image completed!\n");
 
-    close_roof_lines(tmp_lines_vec,eb_config_ptr->min_direct_trd,eb_features_ptr,roof_ptr);
+    close_roof_lines(refine_lines_vec,eb_config_ptr->min_direct_trd,eb_features_ptr,roof_ptr);
     mat_show("reset_roof_image",eb_features_ptr->eb_mats.reset_lines_image,MAT_SIZE);
+    mat_show("refine_roof_image",eb_features_ptr->eb_mats.refine_liens_image,MAT_SIZE);
     mat_show("close_line_images",eb_features_ptr->eb_mats.close_lines_image,MAT_SIZE);
 
     
@@ -1342,7 +1452,19 @@ void  generate_roofs(eb_features_t *eb_featur_ptr, eb_roof_t *roof_ptr, eb_confi
     {
         angle = 90 -angle;
     }
-    angle = roof_ptr->roof_direct[1] > 0? angle : -angle;
+    if(roof_ptr->roof_direct[1] > 0)
+    {
+        angle = roof_ptr->roof_direct[0] > 0.707 || 
+            (roof_ptr->roof_direct[0] < 0 && roof_ptr->roof_direct[0] > -0.707)? 
+                angle : -angle;
+    }
+    else
+    {
+        angle = roof_ptr->roof_direct[0] > 0.707 || 
+            (roof_ptr->roof_direct[0] < 0 && roof_ptr->roof_direct[0] > -0.707)? 
+                -angle : angle;
+    }
+    
     EB_LOG("[EB_DEBUG]::angle rotate is %lf\n",angle);
     rotate(eb_featur_ptr->eb_mats.roofs_lidar_image,dst,
             angle,    

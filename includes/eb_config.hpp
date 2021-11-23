@@ -52,6 +52,7 @@ typedef struct eb_config
     double min_direct_trd;
 
     double ground_z;
+    double roof_resize;
 
     int rebud_density_x;
     int rebud_density_y;

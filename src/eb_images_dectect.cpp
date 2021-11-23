@@ -22,6 +22,12 @@ static int gaussianBlur_and_ctgray(cv::Mat &img , cv::Mat &gray){
  @prama int size -- window size
  */
 void mat_show(const char* name , Mat &mat, int size){
+    #ifdef SAVE_MID_RESULT
+    char *path = "/home/jaxzhong/share_folder/2021_data/Area1/result/build_25";
+    char tmp[512];
+    snprintf(tmp,strlen(name)+strlen(path)+7,"%s/%s.bmp",path,name);
+    imwrite(tmp,mat);
+    #endif
     namedWindow(name,0);
     resizeWindow(name,size,size);
     imshow(name, mat);
@@ -103,6 +109,7 @@ void init_mats(eb_mats_t *mats,const char *image_path,const char *origin_path)
     mats->adsorb_update_image = Mat(mats->image_height,mats->image_width,CV_8UC3,Scalar(255,255,255));
     mats->simplify_lines_image = Mat(mats->image_height,mats->image_width,CV_8UC3,Scalar(255,255,255));
     mats->reset_lines_image = Mat(mats->image_height,mats->image_width,CV_8UC3,Scalar(255,255,255));
+    mats->refine_liens_image = Mat(mats->image_height,mats->image_width,CV_8UC3,Scalar(255,255,255));
     #if 0
     mats->close_lines_image = Mat(mats->image_height,mats->image_width,CV_8UC3,Scalar(255,255,255));
     #endif

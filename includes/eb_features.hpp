@@ -72,6 +72,7 @@ typedef struct eb_mats
     cv::Mat adsorb_update_image;
     cv::Mat simplify_lines_image;
     cv::Mat reset_lines_image;
+    cv::Mat refine_liens_image;
     cv::Mat close_lines_image;
     cv::Mat roofs_image;
     cv::Mat roofs_lidar_image;

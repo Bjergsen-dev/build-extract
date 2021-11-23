@@ -16,11 +16,11 @@ static void get_geo_coorZ(float dx, float dy, double *geo_z, cv::Mat &roof_lidar
 
 }
 
-static void reset_geo_coorXY(eb_roof_t *roof,eb_config_t *eb_config_ptr, cv::Mat &roof_lidar_image)
+static double reset_geo_coorXY(eb_roof_t *roof,eb_config_t *eb_config_ptr, cv::Mat &roof_lidar_image)
 {
     int size = roof->basic_poly.line_size;
     eb_final_line_t *lines  = roof->basic_poly.lines;
-
+    double min_z = INT16_MAX;
     for(int i =0 ; i < size; i++)
     {
         get_geoX_geoY_frm_row_column(eb_config_ptr->trans,
@@ -29,13 +29,17 @@ static void reset_geo_coorXY(eb_roof_t *roof,eb_config_t *eb_config_ptr, cv::Mat
                                         &lines[i].point_beg.point_x,
                                         &lines[i].point_beg.point_y);
 
-        get_geo_coorZ(lines[i].point_beg.dx,
-                        lines[i].point_beg.dy,
+        float dx = lines[i].point_beg.dx > 0? lines[i].point_beg.dx:0;
+        float dy = lines[i].point_beg.dy > 0? lines[i].point_beg.dy:0;
+        get_geo_coorZ(  dx,
+                        dy,
                         &lines[i].point_beg.point_z,
                         roof_lidar_image);
 
+        min_z = min_z > lines[i].point_beg.point_z?lines[i].point_beg.point_z:min_z;
+
         #ifdef EB_DEBUG
-        EB_LOG("point %d ---> dx: %f dy: %f geo_x: %lf geo_y: %lf geo_z: %lf\n",
+        EB_LOG("reset roof corner %d ---> dx: %f dy: %f geo_x: %lf geo_y: %lf geo_z: %lf\n",
                         i,
                         lines[i].point_beg.dx,
                         lines[i].point_beg.dy,
@@ -44,6 +48,8 @@ static void reset_geo_coorXY(eb_roof_t *roof,eb_config_t *eb_config_ptr, cv::Mat
                         lines[i].point_beg.point_z);
         #endif 
     }
+
+    return min_z;
 }
 
 
@@ -89,6 +95,35 @@ void vector_roof_rebuild(eb_roof_t *roof,eb_config_t *eb_config_ptr, cv::Mat &ro
 #endif 
 
 }
+
+ static void resize_basic_roof(eb_roof_t *roof,std::vector<eb_point_t> &tmp_vec,double roof_trd)
+ {
+     for(int i = 0; i < roof->basic_poly.line_size; i++)
+     {
+         int left = i==0?roof->basic_poly.line_size-1:i-1;
+         double a = roof->basic_poly.lines[i].direct[0];
+         double b = -roof->basic_poly.lines[i].direct[1];
+
+         double c = -roof->basic_poly.lines[left].direct[0];
+         double d = roof->basic_poly.lines[left].direct[1];
+        
+         #if 0
+         double cos_t = a*c + b*d;
+         double sin_t = sqrt(1- cos_t*cos_t);
+         #endif
+
+         double sin_t = -a*d+c*b;
+
+         double new_x = roof->basic_poly.lines[i].point_beg.point_x + (roof_trd/sin_t)*(a+c);
+         double new_y = roof->basic_poly.lines[i].point_beg.point_y + (roof_trd/sin_t)*(b+d);
+
+         eb_point_t poi = roof->basic_poly.lines[i].point_beg;
+         poi.point_x = new_x;
+         poi.point_y = new_y;
+         tmp_vec.push_back(poi);
+
+     }
+ }
 
  static void generate_mtl_file(const char *mtl_path,const char* image_name)
  {
@@ -278,6 +313,87 @@ void vector_roof_rebuild(eb_roof_t *roof,eb_config_t *eb_config_ptr, cv::Mat &ro
              }
          }
      }
+
+     #if 1
+     double min_z = reset_geo_coorXY(roof,eb_config_ptr,roof_lidar_image);
+
+     //wall polys
+     std::vector<eb_point_t> tmp_pois;
+     resize_basic_roof(roof,tmp_pois,eb_config_ptr->roof_resize);
+
+     for(int i = 0; i < tmp_pois.size(); i++)
+     {
+         int next = i == roof->basic_poly.line_size-1?0:i+1;
+         fprintf(pois_fp,"v %lf %lf %lf\n",
+                    tmp_pois[i].point_x,
+                    tmp_pois[i].point_y,
+                    tmp_pois[i].point_z);
+
+         fprintf(context_path_fp,"vt 0 0\n");
+
+         fprintf(pois_fp,"v %lf %lf %lf\n",
+                    tmp_pois[next].point_x,
+                    tmp_pois[next].point_y,
+                    tmp_pois[next].point_z);
+
+         fprintf(context_path_fp,"vt 0 0\n");
+
+         fprintf(pois_fp,"v %lf %lf %lf\n",
+                    tmp_pois[next].point_x,
+                    tmp_pois[next].point_y,
+                    eb_config_ptr->ground_z);
+
+         fprintf(context_path_fp,"vt 0 0\n");
+
+         fprintf(pois_fp,"v %lf %lf %lf\n",
+                    tmp_pois[i].point_x,
+                    tmp_pois[i].point_y,
+                    eb_config_ptr->ground_z);
+
+         fprintf(context_path_fp,"vt 0 0\n");
+
+         
+
+         fprintf(pois_index_fp,"f %d %d %d\n",former_pois_num+1,former_pois_num+2,former_pois_num+3);
+         fprintf(pois_index_fp,"f %d %d %d\n",former_pois_num+3,former_pois_num+4,former_pois_num+1);
+
+         former_pois_num += 4;
+         
+
+
+     }
+     #endif
+
+     #if 1
+     fim::Polygon ori;
+     for(int i = 0; i < tmp_pois.size(); i++)
+     {
+         ori.push_back(fim::vec2(tmp_pois[i].point_x,
+                        -tmp_pois[i].point_y));
+     }
+
+    auto ans = ori.convexDecomposition();
+
+    for (auto it = ans.begin(); it != ans.end(); ++it) 
+    {
+        int num = 0;
+        for(auto itt = (*it).begin(); itt != (*it).end(); ++itt)
+        {
+            fprintf(pois_fp,"v %lf %lf %lf\n",
+                    itt->x,
+                    -itt->y,
+                    eb_config_ptr->ground_z);
+            fprintf(context_path_fp,"vt 0 0\n");
+            num++;
+        }
+        for(int j = 0; j < num-2;j++)
+        {
+            fprintf(pois_index_fp,"f %d %d %d\n",former_pois_num+1,former_pois_num+2+j,former_pois_num+3+j);
+        }
+        former_pois_num += num;
+    }
+    #endif
+
 
      fclose(pois_fp);
      fclose(pois_index_fp);

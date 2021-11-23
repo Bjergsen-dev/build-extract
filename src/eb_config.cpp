@@ -37,6 +37,7 @@ static void print_eb_config(eb_config_t * eb_config_ptr)
     EB_LOG("[EB::INFO] min_adsorb_dis: %lf\n",eb_config_ptr->min_adsorb_dis);
     EB_LOG("[EB::INFO] min_direct_trd: %lf\n",eb_config_ptr->min_direct_trd);
     EB_LOG("[EB::INFO] ground_z: %lf\n",eb_config_ptr->ground_z);
+    EB_LOG("[EB::INFO] roof_resize: %lf\n",eb_config_ptr->roof_resize);
     EB_LOG("[EB::INFO] rebud_density_x: %d\n",eb_config_ptr->rebud_density_x);
     EB_LOG("[EB::INFO] rebud_density_y: %d\n",eb_config_ptr->rebud_density_y);
     EB_LOG("*******************EB PARAM CONFIG*********************\n\n");
@@ -87,6 +88,7 @@ void read_eb_config(eb_config_t * eb_config_ptr, const char * file_path)
     fscanf(fp,"min_adsorb_dis: %lf\n",&eb_config_ptr->min_adsorb_dis);
     fscanf(fp,"min_direct_trd: %lf\n",&eb_config_ptr->min_direct_trd);
     fscanf(fp,"ground_z: %lf\n",&eb_config_ptr->ground_z);
+    fscanf(fp,"roof_resize: %lf\n",&eb_config_ptr->roof_resize);
     fscanf(fp,"rebud_density_x: %d\n",&eb_config_ptr->rebud_density_x);
     fscanf(fp,"rebud_density_y: %d\n",&eb_config_ptr->rebud_density_y);
  
