@@ -1,5 +1,75 @@
 #include "eb_transform.hpp"
 #include "opencv2/opencv.hpp"
+
+
+void shp_reader(char * shp_file,std::vector<std::vector<cv::Vec2f>> &polygons_vec){
+    
+    //主要修改
+    GDALAllRegister();
+    
+    GDALDataset* poDS;
+    
+    poDS = (GDALDataset*) GDALOpenEx( shp_file, GDAL_OF_VECTOR, NULL, NULL, NULL );
+    if( poDS == NULL )
+    {
+        printf( "Open failed.\n" );
+        exit( 1 );
+    }
+    
+    //后面与1.x版本一致
+    OGRLayer  *poLayer;
+   // poLayer = poDS->GetLayerByName("building_polygons");
+    poLayer = poDS->GetLayer(0);
+
+
+    OGRFeature *poFeature;
+    poLayer->ResetReading();
+    while( (poFeature = poLayer->GetNextFeature()) != NULL )
+    {
+ 
+        OGRGeometry *poGeometry;
+        poGeometry = poFeature->GetGeometryRef();
+        if( poGeometry != NULL
+                && wkbFlatten(poGeometry->getGeometryType()) == wkbPolygon )
+        {
+            OGRPolygon *poPolygon = (OGRPolygon *) poGeometry;
+			OGRLinearRing *pOGRLinearRing = poPolygon->getExteriorRing();
+            int num = pOGRLinearRing->getNumPoints();
+            
+            OGRPoint point;
+            std::vector<cv::Vec2f> temp_vec;
+            for(int j = 0; j < num-1;j++){
+                pOGRLinearRing->getPoint(j,&point);
+                cv::Vec2f vec(point.getX(),point.getY());
+                temp_vec.push_back(vec);
+            }
+            
+            polygons_vec.push_back(temp_vec);
+
+        }
+        else
+        {
+            printf( "no polygon geometry\n" );
+        }
+        OGRFeature::DestroyFeature( poFeature );
+    }
+    GDALClose( poDS );
+    std::cout<<"..........Read shp file complete"<<std::endl;
+}
+
+
+
+void open_Gdal(GDALDataset *poDataset,char *file_path_name)
+{
+    
+    GDALAllRegister();  //注册所有的驱动
+    poDataset = (GDALDataset *) GDALOpen(file_path_name, GA_ReadOnly );
+    if( poDataset == NULL )
+    {
+        EB_LOG("GDAL::ERROR :%s open failed!\n",file_path_name);
+
+    }
+}
 //get trans of tiff file
 /*
  @prama: const char * file_path_name -- file path to load the tif
@@ -23,6 +93,37 @@ void getTrans_of_TiffFile(const char * file_path_name, double* trans){
 
     
 }
+
+void save_Trans_to_File(eb_config_t * config_ptr)
+{
+    char trans_path[256];
+    snprintf(trans_path,strlen(config_ptr->file_config.out_path)+1,config_ptr->file_config.out_path);
+    snprintf(trans_path+strlen(trans_path),11,"/trans.txt");
+
+    FILE *fp = fopen(trans_path,"w");
+    for(int i = 0; i < 6; i++)
+    {
+        fprintf(fp,"%lf\n",config_ptr->trans[i]);
+    }
+
+    fclose(fp);
+    EB_LOG("save trans to %s\n",trans_path);
+
+}
+
+#ifdef MID_RESULT
+void trans_dx_dy_to_all(cv::Point poi,eb_config_t *config_ptr,double *res)
+{
+    double geo_x = 0.;
+    double geo_y = 0.;
+    get_geoX_geoY_frm_row_column(config_ptr->trans,poi.x,poi.y,&geo_x,&geo_y);
+    float dx = get_row_column_frm_geoX_geoY(config_ptr->all_trans,geo_x,geo_y,1);
+    float dy = get_row_column_frm_geoX_geoY(config_ptr->all_trans,geo_x,geo_y,2);
+
+    res[0] = dx;
+    res[1] = dy;
+}
+#endif
 
 
 //get the row,column subnum in tiff file from spacial loacation geoX geoY
@@ -85,6 +186,35 @@ float get_elevation_frm_row_column(GDALDataset* poDataset, float* inBuf,int x, i
 	
 	
 	return *inBuf;
+	
+}
+
+float get_elevation_frm_geo_XY(GDALDataset* poDataset,double geo_x, double geo_y, double *trans){
+    
+    float inBuf;
+
+    double dTemp = trans[1] * trans[5] - trans[2] * trans[4];
+    
+    float dCol = (trans[5] * (geo_x - trans[0]) - trans[2] * (geo_y - trans[3])) / dTemp + 0.5;//移到像素中心
+	float dRow = (trans[1] * (geo_y - trans[3]) - trans[4] * (geo_x - trans[0])) / dTemp + 0.5;
+
+    
+    if(poDataset == NULL)
+    {
+        EB_LOG("[EB_ERROR:: ] open gdal file failed!\n");
+    }
+    GDALRasterBand* pInRasterBand = poDataset->GetRasterBand(1);
+    EB_LOG("[EB_DEBUG:: ]%f %f\n",dCol,dRow);
+	 CPLErr err;
+	 err = pInRasterBand->RasterIO(GF_Read, dCol, dRow, 1, 1, &inBuf, 1, 1, GDT_Float32, 0, 0);
+     if (err == CE_Failure)
+	{
+		std::cout<<"读取输入数据失败！"<<std::endl;
+		return -1;
+	}
+	
+	
+	return inBuf;
 	
 }
 

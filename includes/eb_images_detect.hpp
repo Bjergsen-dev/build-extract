@@ -8,6 +8,8 @@
 #include "opencv2/core/core.hpp"
 #include "eb_features.hpp"
 #include "eb_config.hpp"
+#include "opencv2/imgproc/imgproc_c.h"
+
 
 
 void rotate(cv::Mat &src, cv::Mat &dst,double angle,cv::Point2f center);
@@ -18,7 +20,7 @@ void rotate(cv::Mat &src, cv::Mat &dst,double angle,cv::Point2f center);
  @prama Mat &mat -- input mat be shown later
  @prama int size -- window size
  */
-void mat_show(const char* name , cv::Mat &mat, int size);
+void mat_show(const char* name , cv::Mat &mat, int size,eb_config_t *config_ptr);
 
 //find the boundaries in input mat with canny methods
 /*
@@ -26,9 +28,11 @@ void mat_show(const char* name , cv::Mat &mat, int size);
 @prama: Mat &sobel_out -- output mat after convolution with canny kernals 
  */
 int canny_find_boundary(cv::Mat &img , cv::Mat &canny_out ,eb_config_t *eb_config_ptr);
+int LoG_find_boundary(cv::Mat &img , cv::Mat &canny_out ,eb_config_t *eb_config_ptr);
+int sobel_find_boundary(cv::Mat &img, cv::Mat &sobel_out,eb_config_t *eb_config_ptr);
 
 
-
+void find_contours(cv::Mat &mask_img,eb_features_t *eb_feature_ptr,eb_config_t* eb_config_ptr);
 //hough methd to find lines(not all boundaries) in boundaries given the canny or sobel way
 /*
  @prama: vector<Vec4f> &lines -- vector to record each line's begin point and end point
@@ -38,9 +42,18 @@ int canny_find_boundary(cv::Mat &img , cv::Mat &canny_out ,eb_config_t *eb_confi
 int hough_find_lins(eb_lines_t *hough_lines,cv::Mat &canny_image, cv::Mat &hough_img,eb_config_t *eb_config_ptr);
 
 void init_mats(eb_mats_t *mats,const char *image_path,const char *origin_path);
-void set_buffer_mat(cv::Mat &boundary_mat,cv::Mat &buffer_mat ,eb_points_t *delau, eb_config_t *config_ptr);
+void set_buffer_mat(cv::Mat &boundary_mat,cv::Mat &buffer_mat ,
+                    eb_points_t *delau, 
+                    eb_config_t *config_ptr
+                    #ifdef MID_RESULT
+                    ,
+                    cv::Mat &all_buffer_mat
+                    #endif
+                    );
 
 
 void init_features(eb_features_t *features);
+
+void get_NDVI_res(cv::Mat &ndvi_image,cv::Mat &input_image);
 
 #endif

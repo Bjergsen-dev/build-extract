@@ -89,5 +89,5 @@ double vec2::dotProduct(const vec2 & vec) const
 
 double vec2::crossProduct(const vec2 & vec) const
 {
-	return (x * vec.y - vec.x * y);
+	return -(x * vec.y - vec.x * y);
 }

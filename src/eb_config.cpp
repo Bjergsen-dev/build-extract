@@ -1,10 +1,12 @@
 #include "eb_config.hpp"
 #include "eb_common_defines.hpp"
+#include "string.h"
 
 
 static void print_file_config(file_config_t * file_config_ptr)
 {
     EB_LOG("\n*******************EB FILE CONFIG*********************\n");
+    EB_LOG("[EB::INFO] task: %s\n",file_config_ptr->task);
     EB_LOG("[EB::INFO] name: %s\n",file_config_ptr->name);
     EB_LOG("[EB::INFO] origin_path: %s\n",file_config_ptr->origin_path);
     EB_LOG("[EB::INFO] image_path: %s\n",file_config_ptr->image_path);
@@ -19,7 +21,7 @@ static void print_eb_config(eb_config_t * eb_config_ptr)
 {
     EB_LOG("\n*******************EB PARAM CONFIG*********************\n");
     EB_LOG("[EB::INFO] canny threshold 1: %lf\n",eb_config_ptr->canny_thd_1);
-    EB_LOG("[EB::INFO] canny threshold 2: %lf\n",eb_config_ptr->canny_thd_1);
+    EB_LOG("[EB::INFO] canny threshold 2: %lf\n",eb_config_ptr->canny_thd_2);
     EB_LOG("[EB::INFO] hough threshold 1: %lf\n",eb_config_ptr->hough_thd_1);
     EB_LOG("[EB::INFO] hough threshold 2: %lf\n",eb_config_ptr->hough_thd_2);
     EB_LOG("[EB::INFO] hough threshold 3: %d\n",eb_config_ptr->hough_thd_3);
@@ -35,8 +37,12 @@ static void print_eb_config(eb_config_t * eb_config_ptr)
     EB_LOG("[EB::INFO] buffer_filter_f: %f\n",eb_config_ptr->buffer_filter_f);
     EB_LOG("[EB::INFO] min_adsorb_num: %d\n",eb_config_ptr->min_adsorb_num);
     EB_LOG("[EB::INFO] min_adsorb_dis: %lf\n",eb_config_ptr->min_adsorb_dis);
+    EB_LOG("[EB::INFO] min_length_of_line: %lf\n",eb_config_ptr->min_length_of_line);
     EB_LOG("[EB::INFO] min_direct_trd: %lf\n",eb_config_ptr->min_direct_trd);
-    EB_LOG("[EB::INFO] ground_z: %lf\n",eb_config_ptr->ground_z);
+    EB_LOG("[EB::INFO] refine_trd: %lf\n",eb_config_ptr->refine_trd);
+    EB_LOG("[EB::INFO] ground_plane: %lf %lf %lf\n",eb_config_ptr->ground_plane[0],
+                                                    eb_config_ptr->ground_plane[1],
+                                                    eb_config_ptr->ground_plane[2]);
     EB_LOG("[EB::INFO] roof_resize: %lf\n",eb_config_ptr->roof_resize);
     EB_LOG("[EB::INFO] rebud_density_x: %d\n",eb_config_ptr->rebud_density_x);
     EB_LOG("[EB::INFO] rebud_density_y: %d\n",eb_config_ptr->rebud_density_y);
@@ -59,7 +65,17 @@ void read_eb_config(eb_config_t * eb_config_ptr, const char * file_path)
         return;
     }
 
-    fscanf(fp,"task: build_extract\n");
+    fscanf(fp,"task: %s\n",eb_config_ptr->file_config.task);
+    if(strlen(eb_config_ptr->file_config.task)>13)
+    {
+        eb_config_ptr->TYPE = EB_CNN;
+        EB_LOG("[EB_INFO::] EB TYPE IS CNN!\n");
+    }
+    else
+    {
+        eb_config_ptr->TYPE = EB_LIDAR;
+        EB_LOG("[EB_INFO::] EB TYPE IS LIDAR!\n");
+    }
     fscanf(fp,"name: %s\n",eb_config_ptr->file_config.name);
     fscanf(fp,"origin_path: %s\n",eb_config_ptr->file_config.origin_path);
     fscanf(fp,"image_path: %s\n",eb_config_ptr->file_config.image_path);
@@ -86,13 +102,18 @@ void read_eb_config(eb_config_t * eb_config_ptr, const char * file_path)
     fscanf(fp,"buffer_filter_f: %f\n",&eb_config_ptr->buffer_filter_f);
     fscanf(fp,"min_adsorb_num: %d\n",&eb_config_ptr->min_adsorb_num);
     fscanf(fp,"min_adsorb_dis: %lf\n",&eb_config_ptr->min_adsorb_dis);
+    fscanf(fp,"min_length_of_line: %lf\n",&eb_config_ptr->min_length_of_line);
     fscanf(fp,"min_direct_trd: %lf\n",&eb_config_ptr->min_direct_trd);
-    fscanf(fp,"ground_z: %lf\n",&eb_config_ptr->ground_z);
+    fscanf(fp,"refine_trd: %lf\n",&eb_config_ptr->refine_trd);
+    fscanf(fp,"ground_plane: %lf %lf %lf\n",&eb_config_ptr->ground_plane[0],&eb_config_ptr->ground_plane[1],&eb_config_ptr->ground_plane[2]);
     fscanf(fp,"roof_resize: %lf\n",&eb_config_ptr->roof_resize);
     fscanf(fp,"rebud_density_x: %d\n",&eb_config_ptr->rebud_density_x);
     fscanf(fp,"rebud_density_y: %d\n",&eb_config_ptr->rebud_density_y);
  
     fclose(fp);
+    EB_LOG("Canny 1 is %lf\n",eb_config_ptr->canny_thd_1);
 
     print_eb_config(eb_config_ptr);
+
+    EB_LOG("Canny 1 is %lf\n",eb_config_ptr->canny_thd_1);
 }

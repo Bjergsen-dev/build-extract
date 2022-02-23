@@ -25,6 +25,7 @@ public:
     DelaunayT() {}
     DelaunayT(const std::vector<A_Point2d> &points);
     DelaunayT(const eb_points_t *eb_points_ptr);
+    DelaunayT(const std::vector<eb_point_t> &tmp_pois);
     DelaunayT(const DelaunayT &delaunayT);
 
     // triangulate all vertex into triangle meshes
@@ -101,6 +102,9 @@ public:
                         boundary_points->points[j].is_delaunay = 1;
                         boundary_points->points[j].is_adsorbed = 0;
                         boundary_points->points[j].adsorb_line_idx = -1;
+                        #ifdef TEST_EVALUATION
+                        boundary_points->points[j].absorb_num = 0;
+                        #endif
                         delau_boudry_pois->points[i] = boundary_points->points[j];
                     }
             }
@@ -157,8 +161,36 @@ DelaunayT::DelaunayT(const eb_points_t *eb_points_ptr)
     for(int i = 0; i < eb_points_ptr->point_size; i++)
     {
         eb_point_t poi = eb_points_ptr->points[i];
-        A_Point2d a_poi(poi.dx,poi.dy);
-        points.push_back(a_poi);
+
+            A_Point2d a_poi(poi.dx,poi.dy);
+            points.push_back(a_poi);
+        
+    }
+    vertex_.clear();
+    vertex_.insert(vertex_.begin(), points.begin(), points.end());
+
+
+    edges_.clear();
+    triangles_.clear();
+    boundary_.clear();
+
+    if (!triangulate())
+    {
+        std::cerr << "Failed to triangulate this point cloud!";
+        abort();
+    }
+}
+
+DelaunayT::DelaunayT(const std::vector<eb_point_t> &tmp_pois)
+{
+    std::vector<A_Point2d> points;
+    for(int i = 0; i < tmp_pois.size(); i++)
+    {
+        eb_point_t poi = tmp_pois[i];
+
+            A_Point2d a_poi(poi.point_x,poi.point_y);
+            points.push_back(a_poi);
+        
     }
     vertex_.clear();
     vertex_.insert(vertex_.begin(), points.begin(), points.end());

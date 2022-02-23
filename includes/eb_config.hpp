@@ -2,6 +2,13 @@
 #define EB_CONFIG_H
 
 #include <iostream>
+#include "eb_common_defines.hpp"
+
+enum EB_TASK
+{
+    EB_LIDAR = 0,
+    EB_CNN = 1 
+};
 
 typedef struct file_config
 {
@@ -12,6 +19,7 @@ typedef struct file_config
     char oesm_path[256];
     char dem_path[256];
     char out_path[256];
+    char task[20];
 }file_config_t;
 
 
@@ -19,7 +27,10 @@ typedef struct eb_config
 {
     file_config_t file_config;
     double trans[6];
-
+    #ifdef MID_RESULT
+    double all_trans[6];
+    #endif
+    EB_TASK TYPE;
     double canny_thd_1;
     double canny_thd_2;
 
@@ -48,10 +59,11 @@ typedef struct eb_config
 
     int min_adsorb_num;
     double min_adsorb_dis;
-
+    double min_length_of_line;
     double min_direct_trd;
+    double refine_trd;
 
-    double ground_z;
+    double ground_plane[3];
     double roof_resize;
 
     int rebud_density_x;

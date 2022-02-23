@@ -2,6 +2,7 @@
 #include "eb_config.hpp"
 #include "eb_common_defines.hpp"
 #include "eb_images_detect.hpp"
+#include "eb_transform.hpp"
 #include <math.h>
 
 
@@ -35,6 +36,12 @@ static bool decide_line_within_pcdBoudaryArea_or_not(cv::Mat &pcd_boudary_mat,eb
 void buffer_filter(eb_features_t * eb_futures_ptr, eb_config_t *eb_config_ptr)
 {
     eb_line_t *tmp_lines = (eb_line_t *)malloc(sizeof(eb_line_t) * eb_futures_ptr->hough_lines.line_size);
+    #ifdef TEST_1
+    cv::Mat ass_hole_mat = cv::Mat(eb_futures_ptr->eb_mats.image_height,
+                                    eb_futures_ptr->eb_mats.image_width,
+                                    CV_8UC3,cv::Scalar(255,255,255));
+    
+    #endif
     for(int i = 0; i < eb_futures_ptr->hough_lines.line_size; i++)
     {
         if(decide_line_within_pcdBoudaryArea_or_not(
@@ -55,8 +62,55 @@ void buffer_filter(eb_features_t * eb_futures_ptr, eb_config_t *eb_config_ptr)
                     cv::Scalar(255),
                     1,
                     CV_AA);
+
+            #ifdef MID_RESULT
+            double trans_res1[2];
+            double trans_res2[2];
+            trans_dx_dy_to_all(cv::Point(tmp_lines[tmp_index].point_beg.dx,tmp_lines[tmp_index].point_beg.dy),
+                                eb_config_ptr,
+                                trans_res1);
+            trans_dx_dy_to_all(cv::Point(tmp_lines[tmp_index].point_end.dx,tmp_lines[tmp_index].point_end.dy),
+                                eb_config_ptr,
+                                trans_res2);
+            cv::line(eb_futures_ptr->eb_mats.all_buf_filter_image,
+                    cv::Point(trans_res1[0],trans_res1[1]),
+                    cv::Point(trans_res2[0],trans_res2[1]),
+                    cv::Scalar(255),
+                    5,
+                    CV_AA);
+            #endif
+
+            #ifdef TEST_1
+            cv::line(ass_hole_mat,
+                    cv::Point(tmp_lines[tmp_index].point_beg.dx,tmp_lines[tmp_index].point_beg.dy),
+                    cv::Point(tmp_lines[tmp_index].point_end.dx,tmp_lines[tmp_index].point_end.dy),
+                    cv::Scalar(0,0,255),
+                    1,
+                    CV_AA);
+
+            cv::line(eb_futures_ptr->eb_mats.adsorb_filter_image,
+                    cv::Point(tmp_lines[tmp_index].point_beg.dx,tmp_lines[tmp_index].point_beg.dy),
+                    cv::Point(tmp_lines[tmp_index].point_end.dx,tmp_lines[tmp_index].point_end.dy),
+                    cv::Scalar(0,0,255),
+                    1,
+                    CV_AA);
+            #endif
         }
     }
+
+    #ifdef TEST_1
+    for(int i = 0; i < eb_futures_ptr->delau_boundary_pois.point_size;i++)
+    {
+        cv::circle(ass_hole_mat,
+                    cv::Point(eb_futures_ptr->delau_boundary_pois.points[i].dx,
+                    eb_futures_ptr->delau_boundary_pois.points[i].dy),
+                    5,
+                    cv::Scalar(0,0,0),
+                    1,
+                    CV_AA);
+    }
+    mat_show("ass_hole",ass_hole_mat,MAT_SIZE,eb_config_ptr);
+    #endif
     #if 1
     eb_futures_ptr->buffer_filter_lines.lines = (eb_line_t *) malloc(sizeof(eb_line_t) *
                                                                        eb_futures_ptr->buffer_filter_lines.line_size);
@@ -80,9 +134,24 @@ void buffer_filter(eb_features_t * eb_futures_ptr, eb_config_t *eb_config_ptr)
                                 eb_futures_ptr->buffer_filter_lines.lines[i].point_end.dy);
     }
     #endif
-    mat_show("buffer_filter_image",
+
+    #ifdef TEST_8_SOBEL
+    mat_show("8_sobel_buffer_filter_image",
             eb_futures_ptr->eb_mats.buf_filter_image,
-            MAT_SIZE);
+            MAT_SIZE,eb_config_ptr);
+    #endif
+
+    #ifdef TEST_CANNY
+    mat_show("canny_buffer_filter_image",
+            eb_futures_ptr->eb_mats.buf_filter_image,
+            MAT_SIZE,eb_config_ptr);
+    #endif
+
+    #ifdef TEST_LoG
+    mat_show("Log_buffer_filter_image",
+            eb_futures_ptr->eb_mats.buf_filter_image,
+            MAT_SIZE,eb_config_ptr);
+    #endif
 
     EB_LOG("[EB::INFO] buffer filter completed，line sum is %d!\n\n",eb_futures_ptr->buffer_filter_lines.line_size);
 }
@@ -128,6 +197,10 @@ static void adsorbsent_check(eb_line_t *line,int line_index, eb_points_t *points
             tmp_info.scale = cos_c*b / a;
             tmp_info.adsorb_dis = sqrt(1-cos_c*cos_c)*b;
             poi_index.push_back(tmp_info);
+
+            #ifdef TEST_EVALUATION
+            points->points[i].absorb_num++;
+            #endif
             
         }
         else
@@ -136,6 +209,9 @@ static void adsorbsent_check(eb_line_t *line,int line_index, eb_points_t *points
             {
                 continue ;
             }
+            #ifdef TEST_EVALUATION
+            points->points[i].absorb_num++;
+            #endif
             eb_adsorb_info_t tmp_info;
             tmp_info.index = i;
             double d = sqrt(pow((line->point_beg.dx - points->points[i].dx),2) 
@@ -374,6 +450,15 @@ void adsorbent_filter(eb_features_t * eb_futures_ptr, eb_config_t *eb_config_ptr
                 absord_line_num++;
                 for(int k = 0; k < absord_num; k++)
                 {
+                    #ifdef TEST_1
+                    cv::circle(eb_futures_ptr->eb_mats.adsorb_filter_image,
+                            cv::Point(eb_futures_ptr->buffer_filter_lines.lines[i].adsorbent.adsorbent_foot[k].dx,
+                                        eb_futures_ptr->buffer_filter_lines.lines[i].adsorbent.adsorbent_foot[k].dy),
+                                        3,
+                                        cv::Scalar(rand_r,rand_g,rand_b),
+                                        1,
+                                        CV_AA);
+                    #else
                     cv::circle(eb_futures_ptr->eb_mats.adsorb_filter_image,
                             cv::Point(eb_futures_ptr->buffer_filter_lines.lines[i].adsorbent.adsorbent_foot[k].dx,
                                         eb_futures_ptr->buffer_filter_lines.lines[i].adsorbent.adsorbent_foot[k].dy),
@@ -381,11 +466,12 @@ void adsorbent_filter(eb_features_t * eb_futures_ptr, eb_config_t *eb_config_ptr
                                         cv::Scalar(rand_r,rand_g,rand_b),
                                         1,
                                         CV_AA);
+                    #endif
                 }              
             }
     }
     EB_LOG("[EB::INFO] adsorb filter completed!\n\n");
-    mat_show("adsorbent_image",eb_futures_ptr->eb_mats.adsorb_filter_image,MAT_SIZE);
+    mat_show("adsorbent_image",eb_futures_ptr->eb_mats.adsorb_filter_image,MAT_SIZE,eb_config_ptr);
 }
 
 typedef struct eb_update_poinfo
@@ -513,11 +599,30 @@ void eb_update_boundary_pois(eb_features_t * eb_futures_ptr,eb_config_t *eb_conf
                             cv::Scalar(0,0,255),
                             1,
                             CV_AA);
+            #ifdef TEST_2
+            cv::circle(eb_futures_ptr->eb_mats.simplify_lines_image,
+                            cv::Point(eb_futures_ptr->insert_pois.points[i].dx,eb_futures_ptr->insert_pois.points[i].dy),
+                            5,
+                            cv::Scalar(0,0,255),
+                            1,
+                            CV_AA);
+            #endif
 
         }
+        #ifdef TEST_EVALUATION
+        int un_adsorb_num = 0;
+        float insensity = 0.;
+        #endif
 
+        #ifdef TEST_EVALUATION
+        EB_LOG("[EB_DEBUG::] boundary_pois sum is %d\n",boudry_pois->point_size);
+        #endif
         for(int i = 0; i < boudry_pois->point_size; i++)
         {
+            #ifdef TEST_EVALUATION
+            EB_LOG("[EB_DEBUG::] boundary_pois %d adsorbnum is %d\n",i,boudry_pois->points[i].absorb_num);
+            insensity += boudry_pois->points[i].absorb_num;
+            #endif
             if(tmp_update_ptr[i].adsorb_num == 0)
             {
                 cv::circle(eb_futures_ptr->eb_mats.adsorb_update_image,
@@ -526,6 +631,17 @@ void eb_update_boundary_pois(eb_features_t * eb_futures_ptr,eb_config_t *eb_conf
                             cv::Scalar(0,0,0),
                             1,
                             CV_AA);
+                #ifdef TEST_2
+                #ifdef TEST_EVALUATION
+                un_adsorb_num++;
+                #endif
+                cv::circle(eb_futures_ptr->eb_mats.simplify_lines_image,
+                            cv::Point(boudry_pois->points[i].dx,boudry_pois->points[i].dy),
+                            3,
+                            cv::Scalar(0,0,0),
+                            1,
+                            CV_AA);
+                #endif
                 continue;
             }
             else
@@ -537,12 +653,46 @@ void eb_update_boundary_pois(eb_features_t * eb_futures_ptr,eb_config_t *eb_conf
                             cv::Scalar(0,255,0),
                             1,
                             CV_AA);
+                
+                #ifdef TEST_2
+                cv::circle(eb_futures_ptr->eb_mats.simplify_lines_image,
+                            cv::Point(boudry_pois->points[i].dx,boudry_pois->points[i].dy),
+                            3,
+                            cv::Scalar(0,255,0),
+                            1,
+                            CV_AA);
+                #endif
             }
         }
 
+        #ifdef TEST_EVALUATION
+        insensity = insensity/(float)boudry_pois->point_size;
+        char eva_path[256];
+        snprintf(eva_path,strlen(eb_config->file_config.out_path)+1,eb_config->file_config.out_path);
+        #ifdef TEST_LoG
+        snprintf(eva_path+strlen(eva_path),20,"/LoG_evaluation.txt");
+        #endif
+        #ifdef TEST_CANNY
+        snprintf(eva_path+strlen(eva_path),22,"/Canny_evaluation.txt");
+        #endif
+        #ifdef TEST_8_SOBEL
+        snprintf(eva_path+strlen(eva_path),24,"/8_Sobel_evaluation.txt");
+        #endif
+        FILE * evaulation_fp = fopen(eva_path,"w");
+        fprintf(evaulation_fp,"all_lines: %d\n in_lines: %d \n p_r: %f\n sum_pois: %d \n un_adsorb_num: %d\n r_c: %f\n insensity: %f\n",
+                    eb_futures_ptr->hough_lines.line_size,
+                    eb_futures_ptr->buffer_filter_lines.line_size,
+                    (float)eb_futures_ptr->buffer_filter_lines.line_size/(float)eb_futures_ptr->hough_lines.line_size,
+                    boudry_pois->point_size,
+                    un_adsorb_num,
+                    (float)(boudry_pois->point_size-un_adsorb_num)/(float)boudry_pois->point_size,
+                    insensity);
+        fclose(evaulation_fp);
+        #endif
+
         mat_show("adsorb_update_image",
                     eb_futures_ptr->eb_mats.adsorb_update_image,
-                    MAT_SIZE);
+                    MAT_SIZE,eb_config);
 
         EB_LOG("[EB::INFO] adsorb update completed!\n\n");
         free(tmp_update_ptr);
@@ -573,7 +723,7 @@ static void update_corner_pois(std::vector<eb_final_line> &lines_vec, eb_ins_poi
     }
 }
 
-static void pre_generate_roof(eb_features_t *eb_features_ptr,std::vector<eb_final_line_t> &tmp_lines_vec)
+static void pre_generate_roof(eb_features_t *eb_features_ptr,std::vector<eb_final_line_t> &tmp_lines_vec,eb_config_t *eb_config_ptr)
 {
     eb_points_t *boudary_pois = &eb_features_ptr->delau_boundary_pois;
     eb_ins_points_t *ins_pois = &eb_features_ptr->insert_pois;
@@ -655,6 +805,7 @@ static void pre_generate_roof(eb_features_t *eb_features_ptr,std::vector<eb_fina
                 tmp_line.point_beg.dy != tmp_line.point_end.dy)
                 {
                     tmp_lines_vec.push_back(tmp_line);
+                    
                 }     
             tmp_line.point_beg = tmp_pois[i];
             tmp_line.point_beg.delau_pois_idx = i;
@@ -693,21 +844,57 @@ static void pre_generate_roof(eb_features_t *eb_features_ptr,std::vector<eb_fina
             tmp_lines_vec[i].point_end = tmp_lines_vec[next].point_end;
             tmp_lines_vec.erase(tmp_lines_vec.begin()+next);
         }
+        #ifdef TEST_2
+        int rgb_r = 0;
+        int rgb_g = 0;
+        int rgb_b = 255;
+        #else
         int rgb_r = rand()%255;
         int rgb_g = rand()%255;
         int rgb_b = rand()%255;
+        #endif
+
+        #if 1
         cv::line(eb_features_ptr->eb_mats.simplify_lines_image,
                 cv::Point(tmp_lines_vec[i].point_beg.dx,tmp_lines_vec[i].point_beg.dy),
                 cv::Point(tmp_lines_vec[i].point_end.dx,tmp_lines_vec[i].point_end.dy),
                 cv::Scalar(rgb_r,rgb_g,rgb_b),
+                #ifdef TEST_2
                 2,
+                #else
+                2,
+                #endif
                 CV_AA);
+
+        #ifdef MID_RESULT
+            double trans_res1[2];
+            double trans_res2[2];
+            trans_dx_dy_to_all(cv::Point(tmp_lines_vec[i].point_beg.dx,tmp_lines_vec[i].point_beg.dy),
+                                eb_config_ptr,
+                                trans_res1);
+            trans_dx_dy_to_all(cv::Point(tmp_lines_vec[i].point_end.dx,tmp_lines_vec[i].point_end.dy),
+                                eb_config_ptr,
+                                trans_res2);
+        cv::line(eb_features_ptr->eb_mats.all_simply_image,
+                cv::Point(trans_res1[0],trans_res1[1]),
+                cv::Point(trans_res2[0],trans_res2[1]),
+                cv::Scalar(rgb_r,rgb_g,rgb_b),
+                #ifdef TEST_2
+                5,
+                #else
+                2,
+                #endif
+                CV_AA);
+        #endif
+        #endif
     }
 
     free(tmp_pois);
     tmp_pois = NULL;
 
-    mat_show("simplify_image",eb_features_ptr->eb_mats.simplify_lines_image,MAT_SIZE);
+    #if 1
+    mat_show("simplify_image",eb_features_ptr->eb_mats.simplify_lines_image,MAT_SIZE,eb_config_ptr);
+    #endif
     EB_LOG("[EB::INFO] simplify roof completed!\n");
 
     
@@ -819,18 +1006,49 @@ static void reset_line_with_direc(eb_final_line_t *line,double *dirct,double thr
 }
 
 #if 1
-static int parallel_check(eb_final_line_t* line_1, eb_final_line_t *line_2, eb_points_t *delau_budry_pois)
+static int parallel_check(eb_final_line_t* line_1, eb_final_line_t *line_2, eb_points_t *delau_budry_pois,int signal)
 {
     double first_sum = 0.;
     double second_sum = 0.;
-    for(int i = line_1->point_end.delau_pois_idx+1; i < line_2->point_beg.delau_pois_idx; i++)
+    int end = signal == 1? delau_budry_pois->point_size : line_2->point_beg.delau_pois_idx;
+    for(int i = line_1->point_end.delau_pois_idx+1; i < end; i++)
     {
+        //if(!(i < line_2->point_beg.delau_pois_idx))break;
         eb_point_t *poi = &delau_budry_pois->points[i];
+#if 1
+        double dis_1_cos = fabs(line_1->direct[0]*(poi->dx-line_1->point_end.dx)+
+                            line_1->direct[1]*(poi->dy-line_1->point_end.dy));
+        double dis_1_sin = fabs(line_1->direct[0]*(poi->dy-line_1->point_end.dy)-
+                            line_1->direct[1]*(poi->dx-line_1->point_beg.dx));
+        
+
+        double dis_2_cos = fabs(line_2->direct[0]*(poi->dx-line_2->point_end.dx)+
+                            line_2->direct[1]*(poi->dy-line_2->point_end.dy));
+        double dis_2_sin = fabs(line_2->direct[0]*(poi->dy-line_2->point_end.dy)-
+                            line_2->direct[1]*(poi->dx-line_2->point_beg.dx));
+        
+        #if 0
+        double first_dis = dis_1_sin + dis_2_cos;
+        double second_dis = dis_1_cos + dis_2_sin;
+        #endif
+        double first_dis = EB_MIN(dis_1_sin,dis_2_cos);
+        double second_dis = EB_MIN(dis_1_cos,dis_2_sin);
+        EB_LOG("poi(%f %f),dis_1_sin: %f, dis_1_cos: %f, dis_2_sin: %f, dis_2_cos: %f\n",
+                poi->dx,
+                poi->dy,
+                dis_1_sin,
+                dis_1_cos,
+                dis_2_sin,
+                dis_2_cos);
+
+#endif
+#if 0
         double first_dis = pow((poi->dx - line_1->point_end.dx),2) + 
                             pow((poi->dy - line_1->point_end.dy),2);
 
         double second_dis = pow((poi->dx - line_2->point_beg.dx),2) + 
                             pow((poi->dy - line_2->point_beg.dy),2);
+#endif
 
         first_sum += first_dis;
         second_sum += second_dis;
@@ -838,22 +1056,25 @@ static int parallel_check(eb_final_line_t* line_1, eb_final_line_t *line_2, eb_p
 
     if(first_sum == second_sum && first_sum == 0.)
     {
+        EB_LOG("[EB_DEBUG::] PARALLEL CHECK is 0!\n");
         return 0;
     }
 
     if(first_sum > second_sum)
     {
+        EB_LOG("[EB_DEBUG::] PARALLEL CHECK is -1! First sum is %lf Second sum is %lf\n",first_sum,second_sum);
         return -1;
     }
 
     if(first_sum < second_sum)
     {
+        EB_LOG("[EB_DEBUG::] PARALLEL CHECK is 1!\n");
         return 1;
     }
 }
 
 
-static void close_roof_lines(std::vector<eb_final_line_t> &lines_vec,double dire_trd,eb_features_t *eb_feature_ptr,eb_roof_t *roof)
+static void close_roof_lines(std::vector<eb_final_line_t> &lines_vec,double dire_trd,eb_features_t *eb_feature_ptr,eb_roof_t *roof,eb_config_t* eb_config_ptr)
 {
     eb_points_t * delau_budry_pois = &eb_feature_ptr->delau_boundary_pois;
     std::vector<eb_final_line_t> final_roof_vec;
@@ -869,10 +1090,20 @@ static void close_roof_lines(std::vector<eb_final_line_t> &lines_vec,double dire
 
         if(fabs(cos) > dire_trd)
         {
-            switch (parallel_check(&lines_vec[i],&lines_vec[next],delau_budry_pois))
+            int signal = 0;
+            if(next == 0)signal = 1;
+            switch (parallel_check(&lines_vec[i],&lines_vec[next],delau_budry_pois,signal))
             {
             case -1:
                 {
+                    EB_LOG("fisrt line is (%f,%f)--(%f %f) direct is (%f,%f)\n",lines_vec[i].point_beg.dx,lines_vec[i].point_beg.dy,
+                                                lines_vec[i].point_end.dx,lines_vec[i].point_end.dy,
+                                                lines_vec[i].direct[0],
+                                                lines_vec[i].direct[1]);
+                    EB_LOG("second line is (%f,%f)--(%f %f) direct is (%f,%f)\n",lines_vec[next].point_beg.dx,lines_vec[next].point_beg.dy,
+                                                lines_vec[next].point_end.dx,lines_vec[next].point_end.dy,
+                                                lines_vec[next].direct[0],
+                                                lines_vec[next].direct[1]);
                     double c = lines_vec[next].point_beg.dx;
                     double d = lines_vec[next].point_beg.dy;
                     double a = lines_vec[i].point_end.dx;
@@ -1038,6 +1269,20 @@ static void close_roof_lines(std::vector<eb_final_line_t> &lines_vec,double dire
     final_roof_vec[0].point_beg.dy = 
         final_roof_vec[final_roof_vec.size()-1].point_end.dy;
 
+    #if 0
+    for(std::vector<eb_final_line_t>::iterator iter = final_roof_vec.begin(); iter!= final_roof_vec.end(); iter++)
+    {
+        eb_final_line_t tmp_final_line = *iter;
+        double tmp = length_of_line(&tmp_final_line);
+
+        if(tmp < eb_config_ptr->min_length_of_line)
+        {
+            final_roof_vec.erase(iter);
+            iter--;
+        }
+    }
+    #endif
+
     roof->basic_poly.line_size = final_roof_vec.size();
     roof->basic_poly.lines = (eb_final_line_t *)malloc(sizeof(eb_final_line_t) * final_roof_vec.size());
     for(int i = 0; i < final_roof_vec.size(); i++)
@@ -1061,7 +1306,7 @@ static void close_roof_lines(std::vector<eb_final_line_t> &lines_vec,double dire
                     cv::Point(roof->basic_poly.lines[i].point_end.dx,
                         roof->basic_poly.lines[i].point_end.dy),
                     cv::Scalar(0,255,0),
-                    1,
+                    3,
                     CV_AA);
         
         cv::circle(eb_feature_ptr->eb_mats.close_lines_image,
@@ -1075,6 +1320,24 @@ static void close_roof_lines(std::vector<eb_final_line_t> &lines_vec,double dire
 }
 
 #endif
+
+static void save_CNN_roof_pois(eb_roof_t *roof,eb_config_t *eb_config_ptr)
+{
+    char final_path[256];
+    snprintf(final_path,strlen(eb_config_ptr->file_config.out_path)+1,eb_config_ptr->file_config.out_path);
+    snprintf(final_path+strlen(final_path),16,"/final_pois.txt");
+    FILE *final_poi_fp = fopen(final_path,"wb");
+    for(int i = 0; i < roof->basic_poly.line_size; i++)
+    {
+        roof->basic_poly.lines[i].point_beg.point_x = roof->basic_poly.lines[i].point_beg.dx;
+        roof->basic_poly.lines[i].point_beg.point_y = roof->basic_poly.lines[i].point_beg.dy;
+        double geo_x = roof->basic_poly.lines[i].point_beg.point_x;
+        double geo_y = roof->basic_poly.lines[i].point_beg.point_y;
+        double geo_z = roof->basic_poly.lines[i].point_beg.point_z;
+        fprintf(final_poi_fp,"%lf %lf %lf\n",geo_x,geo_y,geo_z);
+    }
+    fclose(final_poi_fp);
+}
 
 static void refine_line_with_direc(eb_features_t *eb_feature_ptr,
                                     std::vector<eb_final_line_t> &tmp_lines_vec,
@@ -1111,7 +1374,7 @@ static void refine_line_with_direc(eb_features_t *eb_feature_ptr,
                     float B = -1.;
                     dis = fabs(C1-C2)/sqrt(A*A+1);
                 }
-                if(dis < eb_config_ptr->min_adsorb_dis)
+                if(dis < eb_config_ptr->min_adsorb_dis*eb_config_ptr->refine_trd)
                 {   
                     EB_LOG("[EB_DEBUG::] lines refine -->same dire and close %d\n",i);
                     if(next == 0)
@@ -1156,25 +1419,72 @@ static void refine_line_with_direc(eb_features_t *eb_feature_ptr,
                     refine_lines_vec[i].point_end.delau_pois_idx,
                     refine_lines_vec[i].direct[0],
                     refine_lines_vec[i].direct[1]);
-
+#ifdef TEST_2
+        int rgb_r = 255;
+        int rgb_g = 255;
+        int rgb_b = 255;
+#else
         int rgb_r = rand()%255;
         int rgb_g = rand()%255;
         int rgb_b = rand()%255;
+#endif
         
         cv::line(eb_feature_ptr->eb_mats.refine_liens_image,
                 cv::Point(refine_lines_vec[i].point_beg.dx,refine_lines_vec[i].point_beg.dy),
                 cv::Point(refine_lines_vec[i].point_end.dx,refine_lines_vec[i].point_end.dy),
                 cv::Scalar(rgb_r,rgb_g,rgb_b),
+                3,
+                CV_AA);
+
+        #ifdef MID_RESULT
+            double trans_res1[2];
+            double trans_res2[2];
+            trans_dx_dy_to_all(cv::Point(refine_lines_vec[i].point_beg.dx,refine_lines_vec[i].point_beg.dy),
+                                eb_config_ptr,
+                                trans_res1);
+            trans_dx_dy_to_all(cv::Point(refine_lines_vec[i].point_end.dx,refine_lines_vec[i].point_end.dy),
+                                eb_config_ptr,
+                                trans_res2);
+        cv::line(eb_feature_ptr->eb_mats.all_refine_image,
+                cv::Point(trans_res1[0],trans_res1[1]),
+                cv::Point(trans_res2[0],trans_res2[1]),
+                cv::Scalar(rgb_r,rgb_g,rgb_b),
                 5,
                 CV_AA);
+        #endif
+
+        #if 0
+        cv::line(eb_feature_ptr->eb_mats.simplify_lines_image,
+                cv::Point(refine_lines_vec[i].point_beg.dx,refine_lines_vec[i].point_beg.dy),
+                cv::Point(refine_lines_vec[i].point_end.dx,refine_lines_vec[i].point_end.dy),
+                cv::Scalar(0,0,255),
+                2,
+                CV_AA);
+        #endif
     }
 }
 
 void generate_basic_roof(eb_features_t *eb_features_ptr,eb_config_t *eb_config_ptr,eb_roof_t *roof_ptr)
 {
     std::vector<eb_final_line_t> tmp_lines_vec;
-    pre_generate_roof(eb_features_ptr,tmp_lines_vec);
+    pre_generate_roof(eb_features_ptr,tmp_lines_vec,eb_config_ptr);
+    
+    #if 1
+    for(std::vector<eb_final_line_t>::iterator iter = tmp_lines_vec.begin(); iter!= tmp_lines_vec.end(); iter++)
+    {
+        eb_final_line_t tmp_final_line = *iter;
+        double tmp = length_of_line(&tmp_final_line);
 
+        if(tmp < eb_config_ptr->min_length_of_line)
+        {
+            tmp_lines_vec.erase(iter);
+            iter--;
+        }
+    }
+    #endif
+
+
+    #if 1
     eb_final_line_t *tmp_line_ptr;
     double tmp_length = 0.0;
     for(int i = 0; i < tmp_lines_vec.size(); i++)
@@ -1188,6 +1498,9 @@ void generate_basic_roof(eb_features_t *eb_features_ptr,eb_config_t *eb_config_p
         
 
     }
+    #endif
+
+    
 
     direction_of_line(tmp_line_ptr,roof_ptr->roof_direct);
     EB_LOG("\n[EB::INFO] the main direction is : (%lf,%lf) \n",
@@ -1205,15 +1518,21 @@ void generate_basic_roof(eb_features_t *eb_features_ptr,eb_config_t *eb_config_p
                 tmp_lines_vec[i].direct[1]);
         #endif
 
+        #ifdef TEST_2
+        int rgb_r = 255;
+        int rgb_g = 255;
+        int rgb_b = 255;
+        #else
         int rgb_r = rand()%255;
         int rgb_g = rand()%255;
         int rgb_b = rand()%255;
+        #endif
         
         cv::line(eb_features_ptr->eb_mats.reset_lines_image,
                 cv::Point(tmp_lines_vec[i].point_beg.dx,tmp_lines_vec[i].point_beg.dy),
                 cv::Point(tmp_lines_vec[i].point_end.dx,tmp_lines_vec[i].point_end.dy),
                 cv::Scalar(rgb_r,rgb_g,rgb_b),
-                5,
+                3,
                 CV_AA);
     }
     std::vector<eb_final_line_t> refine_lines_vec;
@@ -1221,11 +1540,25 @@ void generate_basic_roof(eb_features_t *eb_features_ptr,eb_config_t *eb_config_p
 
     EB_LOG("\n[EB::INFO] reset image completed!\n");
 
-    close_roof_lines(refine_lines_vec,eb_config_ptr->min_direct_trd,eb_features_ptr,roof_ptr);
-    mat_show("reset_roof_image",eb_features_ptr->eb_mats.reset_lines_image,MAT_SIZE);
-    mat_show("refine_roof_image",eb_features_ptr->eb_mats.refine_liens_image,MAT_SIZE);
-    mat_show("close_line_images",eb_features_ptr->eb_mats.close_lines_image,MAT_SIZE);
+    close_roof_lines(refine_lines_vec,eb_config_ptr->min_direct_trd,eb_features_ptr,roof_ptr,eb_config_ptr);
+    mat_show("reset_roof_image",eb_features_ptr->eb_mats.reset_lines_image,MAT_SIZE,eb_config_ptr);
+    mat_show("refine_roof_image",eb_features_ptr->eb_mats.refine_liens_image,MAT_SIZE,eb_config_ptr);
 
+    if(eb_config_ptr->TYPE == EB_CNN)
+        save_CNN_roof_pois(roof_ptr,eb_config_ptr);
+    #if 0
+    mat_show("simplify_lines_image",eb_features_ptr->eb_mats.simplify_lines_image,MAT_SIZE,eb_config_ptr);
+    #endif
+
+    #ifdef TEST_NICE_GROUND
+    #else
+    mat_show("close_line_images",eb_features_ptr->eb_mats.close_lines_image,MAT_SIZE,eb_config_ptr);
+    #endif
+
+    if(eb_config_ptr->TYPE == EB_CNN)
+    {
+        mat_show("close_line_images",eb_features_ptr->eb_mats.close_lines_image,MAT_SIZE,eb_config_ptr);
+    }
     
 
 }
@@ -1299,7 +1632,7 @@ static void buble_sort(std::vector<double> &dis_vec,std::vector<double> &val_vec
     }
 }
 
-static double lidar_interpola(cv::Mat &image_copy,int col , int row, eb_roof_t *roof_ptr)
+static double lidar_interpola(cv::Mat &image_copy,int col , int row, eb_roof_t *roof_ptr,bool signal)
 {
     int count = 0;
     int step = 1;
@@ -1326,7 +1659,7 @@ static double lidar_interpola(cv::Mat &image_copy,int col , int row, eb_roof_t *
                 eb_point_t tmp_poi;
                 tmp_poi.dx = j;
                 tmp_poi.dy = i;
-                if(image_copy.at<double>(i,j) != 0. && poi_inside_poly(&roof_ptr->basic_poly,&tmp_poi))
+                if(image_copy.at<double>(i,j) != INVALID_VAL && signal == poi_inside_poly(&roof_ptr->basic_poly,&tmp_poi))
                 {
                     
                     val_vec.push_back(image_copy.at<double>(i,j));
@@ -1373,51 +1706,69 @@ static double lidar_interpola(cv::Mat &image_copy,int col , int row, eb_roof_t *
         }
     }
 
-    return 0.;
+    return INVALID_VAL;
 }
 
-static void generate_lidar_roof(eb_features_t *eb_featur_ptr,eb_roof_t *roof_ptr,eb_config_t *eb_config_ptr)
+static void generate_lidar_roof(cv::Mat &img,eb_points_t *palnar_pois,eb_roof_t *roof_ptr,eb_config_t *eb_config_ptr,bool signal)
 {
-
-    for(int i = 0; i < eb_featur_ptr->palnar_pois.point_size; i++)
+    EB_LOG("[EB_DEBUG::] poi_size is %ld\n",palnar_pois->point_size);
+    for(int i = 0; i < palnar_pois->point_size; i++)
     {
-        int dx = eb_featur_ptr->palnar_pois.points[i].dx + 0.5;
-        int dy = eb_featur_ptr->palnar_pois.points[i].dy + 0.5;
-        eb_featur_ptr->eb_mats.roofs_lidar_image.at<double>(dy,dx) = 
-                        eb_featur_ptr->palnar_pois.points[i].point_z;
+        int dx = palnar_pois->points[i].dx + 0.5;
+        int dy = palnar_pois->points[i].dy + 0.5;
+        if(dx<0 || dx >= img.cols || dy<0 || dy >= img.rows)
+        {
+            continue;
+        }
+        img.at<double>(dy,dx) = 
+                        palnar_pois->points[i].point_z;
         #if 0
-        EB_LOG("[EB_DEBUG::] planar poi %d z is %lf\n",i,eb_featur_ptr->palnar_pois.points[i].point_z);
+        EB_LOG("[EB_DEBUG::] planar poi %d z is %lf\n",i,palnar_pois->points[i].point_z);
         #endif
             
     }
+    
     cv::Mat image_copy;
-    image_copy = eb_featur_ptr->eb_mats.roofs_lidar_image.clone();
-    mat_show("lidar_roof_origin",image_copy,MAT_SIZE);
+    image_copy = img.clone();
+    #ifdef TEST_NICE_GROUND
+    if(signal)
+    {
+        mat_show("lidar_roof_origin",image_copy,MAT_SIZE,eb_config_ptr);
+    }
+    else
+    {
+        mat_show("org_lidar_roof_origin",image_copy,MAT_SIZE,eb_config_ptr);
+    }
+    #else
+    mat_show("lidar_roof_origin",image_copy,MAT_SIZE,eb_config_ptr);
+    #endif
+    
     #if 0
     cv::imwrite("../images/lidar_roof_0.tif",image_copy);
     #endif
     #if 1
-    for(int i = 0; i < eb_featur_ptr->eb_mats.roofs_lidar_image.rows;i++)
+    for(int i = 0; i < img.rows;i++)
     {
-        for(int j = 0; j < eb_featur_ptr->eb_mats.roofs_lidar_image.cols;j++)
+        for(int j = 0; j < img.cols;j++)
         {
             eb_point_t tmp_poi;
             tmp_poi.dx = j;
             tmp_poi.dy = i;
-            if(poi_inside_poly(&roof_ptr->basic_poly,&tmp_poi))
+            if(signal == poi_inside_poly(&roof_ptr->basic_poly,&tmp_poi))
             {
-                if(eb_featur_ptr->eb_mats.roofs_lidar_image.at<double>(i,j) == 0.)
+                if(img.at<double>(i,j) == INVALID_VAL)
                 {
-                    eb_featur_ptr->eb_mats.roofs_lidar_image.at<double>(i,j)=
+                    img.at<double>(i,j)=
                     lidar_interpola(image_copy,
                                         j,
                                         i,
-                                        roof_ptr);
+                                        roof_ptr,
+                                        signal);
                 }
             }
             else
             {
-                eb_featur_ptr->eb_mats.roofs_lidar_image.at<double>(i,j) = 0.;
+                img.at<double>(i,j) = INVALID_VAL;
             }
         }
     }
@@ -1431,15 +1782,19 @@ void  generate_roofs(eb_features_t *eb_featur_ptr, eb_roof_t *roof_ptr, eb_confi
                             eb_featur_ptr,
                             eb_featur_ptr->eb_mats.buffer_image,
                             eb_config_ptr->buffer_filter_f);
-    mat_show("roofs_image",eb_featur_ptr->eb_mats.roofs_image,MAT_SIZE);
+    mat_show("roofs_image",eb_featur_ptr->eb_mats.roofs_image,MAT_SIZE,eb_config_ptr);
     #endif
 
     #if 1
-    generate_lidar_roof(eb_featur_ptr,roof_ptr,eb_config_ptr);
-    mat_show("lidar_roof",eb_featur_ptr->eb_mats.roofs_lidar_image,MAT_SIZE);
+    generate_lidar_roof(eb_featur_ptr->eb_mats.roofs_lidar_image,
+                        &eb_featur_ptr->palnar_pois,roof_ptr,eb_config_ptr,true);
+    mat_show("lidar_roof",eb_featur_ptr->eb_mats.roofs_lidar_image,MAT_SIZE,eb_config_ptr);
     #ifdef EB_DEBUG
-    #if 0
-    cv::imwrite("../images/lidar_roof.tif",eb_featur_ptr->eb_mats.roofs_lidar_image);
+
+    #ifdef TEST_NICE_GROUND
+    generate_lidar_roof(eb_featur_ptr->eb_mats.org_roofs_lidar_image,
+                        &eb_featur_ptr->org_palnar_pois,roof_ptr,eb_config_ptr,false);
+    mat_show("org_lidar_roof",eb_featur_ptr->eb_mats.org_roofs_lidar_image,MAT_SIZE,eb_config_ptr);
     #endif
     
     cv::Mat dst;
@@ -1452,25 +1807,13 @@ void  generate_roofs(eb_features_t *eb_featur_ptr, eb_roof_t *roof_ptr, eb_confi
     {
         angle = 90 -angle;
     }
-    if(roof_ptr->roof_direct[1] > 0)
-    {
-        angle = roof_ptr->roof_direct[0] > 0.707 || 
-            (roof_ptr->roof_direct[0] < 0 && roof_ptr->roof_direct[0] > -0.707)? 
-                angle : -angle;
-    }
-    else
-    {
-        angle = roof_ptr->roof_direct[0] > 0.707 || 
-            (roof_ptr->roof_direct[0] < 0 && roof_ptr->roof_direct[0] > -0.707)? 
-                -angle : angle;
-    }
-    
+    angle = roof_ptr->roof_direct[1] > 0? angle : -angle;
     EB_LOG("[EB_DEBUG]::angle rotate is %lf\n",angle);
     rotate(eb_featur_ptr->eb_mats.roofs_lidar_image,dst,
             angle,    
             cv::Point2f(eb_featur_ptr->eb_mats.roofs_lidar_image.cols/2,
                         eb_featur_ptr->eb_mats.roofs_lidar_image.rows/2));
-    mat_show("rotate_lidar",dst,MAT_SIZE);
+    mat_show("rotate_lidar",dst,MAT_SIZE,eb_config_ptr);
     #if 0
     cv::imwrite("../images/lidar_roof_rotate.tif",dst);
     #endif
