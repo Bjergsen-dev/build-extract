@@ -111,9 +111,9 @@ void read_eb_config(eb_config_t * eb_config_ptr, const char * file_path)
     fscanf(fp,"rebud_density_y: %d\n",&eb_config_ptr->rebud_density_y);
  
     fclose(fp);
-    EB_LOG("Canny 1 is %lf\n",eb_config_ptr->canny_thd_1);
+    EB_LOG("[EB::INFO] Canny 1 is %lf\n",eb_config_ptr->canny_thd_1);
 
     print_eb_config(eb_config_ptr);
 
-    EB_LOG("Canny 1 is %lf\n",eb_config_ptr->canny_thd_1);
+    EB_LOG("[EB::INFO] Canny 1 is %lf\n",eb_config_ptr->canny_thd_1);
 }

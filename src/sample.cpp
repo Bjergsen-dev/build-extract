@@ -30,6 +30,8 @@ static bool poi_inside_poly(std::vector<cv::Point> &poly, float x, float y)
 int main(
     int argc, char** argv
     ) {
+
+   
     #if 0
 
     int build_num = 47;
@@ -431,8 +433,9 @@ int main(
     init_features(&eb_extract_features);
     static eb_config_t eb_config; 
     read_eb_config(&eb_config,argv[1]);
-    EB_LOG("eb_config_ptr->canny_thd_1 is %lf\n",eb_config.canny_thd_1);
 
+    clock_t eb_time = clock();
+    EB_LOG("[EB::INFO] %s EB process Begin! time is %ld\n",eb_config.file_config.name,eb_time);
     
     init_mats(&eb_extract_features.eb_mats,
                 eb_config.file_config.image_path,
@@ -710,6 +713,10 @@ int main(
     if(eb_config.TYPE == EB_LIDAR)
     {
         generate_roofs(&eb_extract_features, &roof_ptr, &eb_config);
+        //To record the time in EB process.
+        eb_time = clock();
+        EB_LOG("[EB::INFO] Extract the Building Contours finished! time is %ld\n",eb_time);
+        roof_ptr.basic_poly_info.eb_time = (double)eb_time/CLOCKS_PER_SEC;
         #if 0
         vector_roof_rebuild(&roof_ptr,&eb_config,eb_extract_features.eb_mats.roofs_lidar_image);
         #endif

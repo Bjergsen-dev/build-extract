@@ -107,7 +107,7 @@ static double reset_geo_coorXY(eb_roof_t *roof,eb_config_t *eb_config_ptr, cv::M
         
 
         #ifdef EB_DEBUG
-        EB_LOG("reset roof corner %d ---> dx: %f dy: %f geo_x: %lf geo_y: %lf geo_z: %lf\n",
+        EB_LOG("[EB::DEBUG] reset roof corner %d ---> dx: %f dy: %f geo_x: %lf geo_y: %lf geo_z: %lf\n",
                         i,
                         lines[i].point_beg.dx,
                         lines[i].point_beg.dy,
@@ -337,6 +337,22 @@ void vector_roof_rebuild(eb_roof_t *roof,eb_config_t *eb_config_ptr, cv::Mat &ro
 
  } 
 
+ static void generate_final_info(eb_roof_t *roof, eb_config_t * config)
+ {
+     roof->basic_poly_info.poi_size = roof->basic_poly.line_size;
+     std::vector<cv::Point2f> approx;
+     for(int i = 0; i < roof->basic_poly.line_size; i++)
+     {
+         approx.push_back(cv::Point2f(roof->basic_poly.lines[i].point_beg.dx,
+                                        roof->basic_poly.lines[i].point_beg.dy));
+         
+     }
+     roof->basic_poly_info.area_size = RESOLUTION*RESOLUTION*fabs(cv::contourArea(approx,true));
+     EB_LOG("[EB::INFO] %s final info: Extract_time is %lf Rebuild_time is %lf Area_size is %lf Poi_size is %d\n",
+                config->file_config.name, roof->basic_poly_info.eb_time, roof->basic_poly_info.rebuild_time,
+                roof->basic_poly_info.area_size, roof->basic_poly_info.poi_size);
+ }
+
  void grid_roof_rebuild(eb_roof_t *roof,eb_config_t *eb_config_ptr, 
                         cv::Mat &roof_lidar_image,cv::Mat &grd_roof_lidar_image,cv::Mat &close_line_image)
  {
@@ -465,6 +481,10 @@ void vector_roof_rebuild(eb_roof_t *roof,eb_config_t *eb_config_ptr, cv::Mat &ro
      }
      #endif
 
+    //To record the time in EB process.
+    clock_t eb_time = clock();
+    EB_LOG("[EB::INFO] Rebuild the roof finished! time is %ld\n",eb_time);
+
      #ifndef RB_NO_BASE
      double min_z = reset_geo_coorXY(roof,eb_config_ptr,roof_lidar_image);
      EB_LOG("[EB_DEBUG::] MIN_Z IS %lf \n",min_z);
@@ -473,7 +493,7 @@ void vector_roof_rebuild(eb_roof_t *roof,eb_config_t *eb_config_ptr, cv::Mat &ro
      //wall polys
      std::vector<eb_point_t> tmp_pois;
      int clock_wise = check_clock_wise(&roof->basic_poly);
-     EB_LOG("---------------->CLOCK_WAISE IS %d\n",clock_wise);
+     EB_LOG("[EB::DEBUG] ---------------->CLOCK_WAISE IS %d\n",clock_wise);
      resize_basic_roof(roof,tmp_pois,eb_config_ptr->roof_resize,clock_wise);
 
      for(int i = 0; i < tmp_pois.size(); i++)
@@ -636,6 +656,11 @@ void vector_roof_rebuild(eb_roof_t *roof,eb_config_t *eb_config_ptr, cv::Mat &ro
         former_pois_num += num;
     }
 
+    eb_time = clock();
+    EB_LOG("[EB::INFO] Rebuild the base finished! time is %ld\n",eb_time);
+
+    roof->basic_poly_info.rebuild_time = (double) eb_time/CLOCKS_PER_SEC - roof->basic_poly_info.eb_time;
+
     #ifdef RB_NO_ROOF
     for (auto it = ans.begin(); it != ans.end(); ++it) 
     {
@@ -668,6 +693,11 @@ void vector_roof_rebuild(eb_roof_t *roof,eb_config_t *eb_config_ptr, cv::Mat &ro
      generate_mtl_file(mtl_path,eb_config_ptr->file_config.name);
      generate_obj_file(eb_config_ptr->file_config.name,pois_path,context_path,pois_index_path,obj_path,mtl_change_idx);
 
+     eb_time = clock();
+     EB_LOG("[EB::INFO] Generate the Building model files finished! time is : %ld\n",eb_time);
+
+     generate_final_info(roof,eb_config_ptr);
+     //The cidx is the index for the Area model generation by the seperate models. 
      char change_idx_path[256];
      snprintf(change_idx_path,strlen(eb_config_ptr->file_config.out_path)+1,eb_config_ptr->file_config.out_path);
      snprintf(change_idx_path+strlen(change_idx_path),10,"/cidx.txt");

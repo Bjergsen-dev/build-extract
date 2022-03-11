@@ -29,7 +29,7 @@ void mat_show(const char* name , cv::Mat &mat, int size,eb_config_t *config_ptr)
     snprintf(tmp+strlen(tmp),strlen(name)+6,"/%s.bmp",name);
     imwrite(tmp,mat);
 
-    #if 1
+    #if 0
     #ifdef MID_RESULT
     #else
     namedWindow(name,0);

@@ -7,7 +7,21 @@
 #define MIN_PIXEL_VAL 10.
 #define MAX_PIXEL_VAL 250.
 #define MIN_DISPARITY 0.000005
-#define EB_LOG(...) printf(__VA_ARGS__)
+#define RESOLUTION 0.09
+
+#ifdef  DEBUG_PRF
+    #define EB_LOG(...) printf(__VA_ARGS__)
+#else
+    #define EB_LOG(...) \
+    { \
+        FILE *pfLog = fopen("/home/jaxzhong/Exp_data/Area3/result/log","a+");\
+        if (NULL != pfLog) { \
+            fprintf(pfLog, __VA_ARGS__);\
+        }\
+        fclose(pfLog);\
+    }
+#endif
+
 #define EB_MAX(a,b) ((a) < (b) ? (b) : (a))
 #define EB_MIN(a,b) ((a) > (b) ? (b) : (a))
 #define EB_LENGTH(a,b,c,d) sqrt(pow(a-b,2)+pow(c-d,2))
@@ -16,7 +30,7 @@
 #define MIN_DOUBLE 1E-6
 #define EB_DEBUG
 //#define EB_PCL_VISUAL
-#define RB_NO_ROOF
+//#define RB_NO_ROOF
 //#define RB_NO_BASE
 #define NO_FIT_GROUND
 #define TEST_1

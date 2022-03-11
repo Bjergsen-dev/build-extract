@@ -125,12 +125,22 @@ typedef struct eb_polygon
 
 }eb_polygon_t;
 
+typedef struct eb_poly_info
+{
+    double eb_time;
+    double rebuild_time;
+    double area_size;  
+    int poi_size;
+
+}eb_poly_info_t;
+
 typedef struct eb_roof
 {
     eb_polygon_t *polygons;  
     int poly_size;
 
     eb_polygon_t basic_poly;
+    eb_poly_info_t basic_poly_info;
     double roof_direct[2];
 }eb_roof_t;
 

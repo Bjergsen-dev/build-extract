@@ -107,7 +107,7 @@ void save_Trans_to_File(eb_config_t * config_ptr)
     }
 
     fclose(fp);
-    EB_LOG("save trans to %s\n",trans_path);
+    EB_LOG("[EB::INFO] save trans to %s\n",trans_path);
 
 }
 

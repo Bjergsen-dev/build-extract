@@ -359,7 +359,7 @@ void adsorbent_filter(eb_features_t * eb_futures_ptr, eb_config_t *eb_config_ptr
         for(int j = 0; j < eb_futures_ptr->delau_boundary_pois.point_size; j++)
         {
             #ifdef EB_DEBUG
-            EB_LOG("    [EB_DEBUG::] absord filter is processing point %d\n",j);
+            EB_LOG("[EB_DEBUG::] absord filter is processing point %d\n",j);
             bool PRINT_ABSORD = 0;
             if(i == 15 && j == 57)
             {
@@ -1033,7 +1033,7 @@ static int parallel_check(eb_final_line_t* line_1, eb_final_line_t *line_2, eb_p
         #endif
         double first_dis = EB_MIN(dis_1_sin,dis_2_cos);
         double second_dis = EB_MIN(dis_1_cos,dis_2_sin);
-        EB_LOG("poi(%f %f),dis_1_sin: %f, dis_1_cos: %f, dis_2_sin: %f, dis_2_cos: %f\n",
+        EB_LOG("[EB::DEBUG] poi(%f %f),dis_1_sin: %f, dis_1_cos: %f, dis_2_sin: %f, dis_2_cos: %f\n",
                 poi->dx,
                 poi->dy,
                 dis_1_sin,
@@ -1096,11 +1096,11 @@ static void close_roof_lines(std::vector<eb_final_line_t> &lines_vec,double dire
             {
             case -1:
                 {
-                    EB_LOG("fisrt line is (%f,%f)--(%f %f) direct is (%f,%f)\n",lines_vec[i].point_beg.dx,lines_vec[i].point_beg.dy,
+                    EB_LOG("[EB::DEBUG] fisrt line is (%f,%f)--(%f %f) direct is (%f,%f)\n",lines_vec[i].point_beg.dx,lines_vec[i].point_beg.dy,
                                                 lines_vec[i].point_end.dx,lines_vec[i].point_end.dy,
                                                 lines_vec[i].direct[0],
                                                 lines_vec[i].direct[1]);
-                    EB_LOG("second line is (%f,%f)--(%f %f) direct is (%f,%f)\n",lines_vec[next].point_beg.dx,lines_vec[next].point_beg.dy,
+                    EB_LOG("[EB::DEBUG] second line is (%f,%f)--(%f %f) direct is (%f,%f)\n",lines_vec[next].point_beg.dx,lines_vec[next].point_beg.dy,
                                                 lines_vec[next].point_end.dx,lines_vec[next].point_end.dy,
                                                 lines_vec[next].direct[0],
                                                 lines_vec[next].direct[1]);
@@ -1510,7 +1510,7 @@ void generate_basic_roof(eb_features_t *eb_features_ptr,eb_config_t *eb_config_p
     {
         reset_line_with_direc(&tmp_lines_vec[i],roof_ptr->roof_direct,eb_config_ptr->min_direct_trd);
         #ifdef EB_DEBUG
-        EB_LOG("[EB_DEBUG::] reset line %d-->delau_idx : %d %d direct: %lf %lf\n",
+        EB_LOG("[EB::DEBUG] reset line %d-->delau_idx : %d %d direct: %lf %lf\n",
                 i,
                 tmp_lines_vec[i].point_beg.delau_pois_idx,
                 tmp_lines_vec[i].point_end.delau_pois_idx,
